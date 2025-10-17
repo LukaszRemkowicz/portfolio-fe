@@ -1,6 +1,6 @@
 /* landingpage/src/App.module.css */
 
-@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Indie+Flower&family=Playfair+Display:wght@400;700&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Indie+Flower&family=Playfair+Display:wght@400;700&display=swap');
 
 :root {
   --color-bg1: #181c2b;
@@ -12,16 +12,7 @@
 
 .app-container {
   color: var(--color-text);
-  font-family: "Montserrat", Arial, sans-serif;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-main {
-  flex: 1;
-  display: flex;
-  justify-content: center;
+  font-family: 'Montserrat', Arial, sans-serif;
 }
 
 .hero-viewport {
@@ -29,14 +20,13 @@ main {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  background-color: #181c2b; /* Fallback for when image fails */
 }
 
 .page-content {
   flex: 1;
 }
 
-/* .navbar {
+.navbar {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -69,7 +59,7 @@ main {
 
 .navbar__link:hover {
   color: var(--color-accent);
-} */
+}
 
 .main-content {
   flex: 1; /* Allow main content to grow and push gallery down */
@@ -104,7 +94,7 @@ main {
 }
 
 .hero__name {
-  font-family: "Playfair Display", serif;
+  font-family: 'Playfair Display', serif;
   font-weight: 700;
   font-size: 1.5rem;
   color: var(--color-accent);
@@ -113,7 +103,7 @@ main {
 }
 
 .hero__title {
-  font-family: "Montserrat", sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 0.9rem;
   color: var(--color-subtext);
   text-transform: uppercase;
@@ -161,8 +151,7 @@ main {
   font-size: 0.95rem;
 }
 
-.loading-indicator,
-.error-message {
+.loading-indicator, .error-message {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -172,4 +161,4 @@ main {
 
 .error-message {
   color: #ff6b6b;
-}
+} 
