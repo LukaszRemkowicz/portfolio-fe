@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import ShopRoute from '../components/ShopRoute';
 import ProgrammingRoute from '../components/ProgrammingRoute';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';

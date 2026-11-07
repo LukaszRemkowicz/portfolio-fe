@@ -8,7 +8,7 @@ import { startTransition } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 import { DehydratedState, QueryClient } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router';
 import i18n, { i18nReady } from './i18n.client';
 import { setLanguageGetter } from './api/api';
 import { initClientServices } from './utils/initClientServices';

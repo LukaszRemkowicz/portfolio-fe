@@ -6,7 +6,7 @@ import {
   waitFor,
   within,
 } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import TravelHighlightsPage from '../components/TravelHighlightsPage';
 import { useBackground } from '../hooks/useBackground';
 import { useImageUrls } from '../hooks/useImageUrls';

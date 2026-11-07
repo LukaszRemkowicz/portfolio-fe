@@ -1,6 +1,6 @@
 // frontend/src/App.tsx
 import React, { Suspense, lazy } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router';
 import HomePage from './HomePage';
 import { hasAnalyticsConsent } from './utils/analytics';
 import { useGoogleAnalytics } from './hooks/useGoogleAnalytics';

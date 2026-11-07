@@ -7,7 +7,7 @@
 import { renderToPipeableStream } from 'react-dom/server';
 import { StaticRouter } from 'react-router';
 import { DehydratedState, dehydrate, QueryClient } from '@tanstack/react-query';
-import { matchPath } from 'react-router-dom';
+import { matchPath } from 'react-router';
 import type { HelmetServerState } from 'react-helmet-async';
 import { PassThrough, Writable } from 'node:stream';
 import AppShell from './AppShell';

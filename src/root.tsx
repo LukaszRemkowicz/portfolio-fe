@@ -32,6 +32,10 @@ import { RequestOriginContext } from './context/RequestOriginContext';
 import { useGoogleAnalytics } from './hooks/useGoogleAnalytics';
 import { hasAnalyticsConsent } from './utils/analytics';
 import { getRequestLanguage, getRequestOrigin } from './utils/requestMeta';
+import {
+  createLoaderQueryClient,
+  prefetchQuerySafely,
+} from './utils/loaderData';
 import ClientDocumentGuards from './components/common/ClientDocumentGuards';
 import ClientOnly from './components/common/ClientOnly';
 import CookieConsent from './components/common/CookieConsent';
@@ -46,7 +50,6 @@ import {
 } from './criticalHead';
 import styles from './styles/components/App.module.css';
 import { publicEnv, resolvePublicEnv } from '../server/publicEnv.js';
-import { logWarning, toErrorPayload } from '../server/logging.js';
 
 /** Escape serialized state for safe inline HTML embedding (server/documentRender.js). */
 function serializeForHtml(state: unknown): string {
@@ -58,21 +61,6 @@ function serializeForHtml(state: unknown): string {
     .replace(/\u2029/g, '\\u2029');
 }
 
-async function prefetchQuerySafely(
-  queryClient: QueryClient,
-  options: Parameters<QueryClient['prefetchQuery']>[0]
-) {
-  try {
-    await queryClient.prefetchQuery(options);
-  } catch (error) {
-    logWarning({
-      event: 'prefetch_failed',
-      query_key: options.queryKey,
-      ...toErrorPayload(error),
-    });
-  }
-}
-
 export async function loader({ request, context }: Route.LoaderArgs) {
   const language = getRequestLanguage(request);
   const requestOrigin = getRequestOrigin(request);
@@ -82,15 +70,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   });
 
   // Request-scoped; the in-memory SSR shell cache is intentionally gone.
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        // Discarded after this request; the browser hydrates into its own client.
-        staleTime: Infinity,
-      },
-    },
-  });
+  const queryClient = createLoaderQueryClient();
   const client = createApiClient(
     () => language,
     requestOrigin,

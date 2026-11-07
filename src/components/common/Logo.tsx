@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import styles from '../../styles/components/Logo.module.css';
 import { publicEnv } from '../../../server/publicEnv.js';
 

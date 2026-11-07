@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import React, { useState, useEffect } from 'react';
 import { Cookie } from 'lucide-react';
 import styles from './CookieConsent.module.css';

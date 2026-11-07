@@ -1,5 +1,5 @@
 import { type FC } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { APP_ROUTES } from '../api/constants';
 import StarBackground from './StarBackground';
 import styles from '../styles/components/NotFoundPage.module.css';

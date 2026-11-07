@@ -1,6 +1,6 @@
 // frontend/src/components/TravelHighlights.tsx
 import { type FC, useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import styles from '../styles/components/TravelHighlights.module.css';
 import { MapPin } from 'lucide-react';
 import { MainPageLocation } from '../types';

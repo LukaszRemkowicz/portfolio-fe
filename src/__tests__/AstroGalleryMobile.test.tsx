@@ -1,6 +1,6 @@
 import { act } from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import '@testing-library/jest-dom';
 import AstroGallery from '../components/AstroGallery';
 import { useAstroImages } from '../hooks/useAstroImages';

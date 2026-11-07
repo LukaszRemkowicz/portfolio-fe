@@ -1,10 +1,9 @@
 import { type FC, useMemo } from 'react';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { APP_ROUTES } from '../api/constants';
 import { useShopProducts } from '../hooks/useShopProducts';
-import SEO from './common/SEO';
 import StarBackground from './StarBackground';
 import ShootingStars from './ShootingStars';
 import ClientOnly from './common/ClientOnly';
@@ -33,11 +32,6 @@ const Shop: FC = () => {
 
   return (
     <>
-      <SEO
-        title={t('shop.metaTitle')}
-        description={t('shop.metaDescription')}
-        url={APP_ROUTES.SHOP}
-      />
       <StarBackground />
       <div className={styles.shopContainer}>
         {responsiveBackgroundProps.src ? (

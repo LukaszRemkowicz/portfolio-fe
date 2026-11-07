@@ -1,8 +1,15 @@
 // frontend/src/components/common/ImageModal.tsx
-import { type FC, useEffect, useCallback, useState, useRef } from 'react';
+import {
+  type FC,
+  useEffect,
+  useCallback,
+  useState,
+  useRef,
+  useSyncExternalStore,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { X, Calendar, MapPin } from 'lucide-react';
 import styles from '../../styles/components/ImageModal.module.css';
 import { AstroImage, EquipmentItem } from '../../types';
@@ -17,7 +24,16 @@ interface ImageModalProps {
   onClose: () => void;
 }
 
+// Hydration-safe "is the browser" flag: false on the server and during hydration
+// (the portal below must not be part of the hydrated tree), true afterwards.
+const subscribeNoop = () => () => undefined;
+
 const ImageModalContent: FC<ImageModalProps> = ({ image, onClose }) => {
+  const isClient = useSyncExternalStore(
+    subscribeNoop,
+    () => true,
+    () => false
+  );
   const navigate = useNavigate();
   const { i18n } = useTranslation();
 
@@ -434,7 +450,7 @@ const ImageModalContent: FC<ImageModalProps> = ({ image, onClose }) => {
   if (!image) return null;
 
   // Prevent SSR crash: document.body is not available during server rendering.
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined' || !isClient) return null;
 
   return createPortal(
     <div

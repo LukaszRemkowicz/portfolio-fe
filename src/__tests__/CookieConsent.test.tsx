@@ -1,5 +1,5 @@
 import { render, screen, act, fireEvent } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import '@testing-library/jest-dom';
 import CookieConsent from '../components/common/CookieConsent';
 

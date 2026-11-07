@@ -1,6 +1,6 @@
 // frontend/src/components/Navbar.tsx
 import { type FC, useState } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router';
 import Logo from './common/Logo';
 import styles from '../styles/components/Navbar.module.css';
 import { Menu, X } from 'lucide-react';

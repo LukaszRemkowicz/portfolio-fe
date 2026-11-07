@@ -1,4 +1,5 @@
 import { createRequestHandler } from 'react-router';
+import { isMalformedRequestTarget } from '../src/server/requestTarget';
 
 declare module 'react-router' {
   export interface AppLoadContext {
@@ -25,6 +26,25 @@ export default {
     const requestId =
       request.headers.get('x-request-id')?.split(',')[0]?.trim() ||
       crypto.randomUUID();
+    if (isMalformedRequestTarget(request.url)) {
+      console.warn(
+        JSON.stringify({
+          service: 'frontend-ssr',
+          level: 'WARNING',
+          event: 'request_rejected',
+          kind: 'security_probe',
+          request_id: requestId,
+          method: request.method,
+          path: request.url.slice(0, 2048),
+          reason: 'malformed_request_target',
+          status: 400,
+        })
+      );
+      return new Response('Bad Request', {
+        status: 400,
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      });
+    }
     let status = 500;
     let error: unknown;
     try {

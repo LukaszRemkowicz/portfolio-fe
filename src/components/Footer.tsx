@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import styles from '../styles/components/Footer.module.css';
 import { Sparkles } from 'lucide-react';
 import { useProfile } from '../hooks/useProfile';

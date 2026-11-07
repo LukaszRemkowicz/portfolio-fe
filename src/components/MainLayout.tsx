@@ -3,7 +3,7 @@ import { type FC } from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import styles from '../styles/components/App.module.css';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { MainLayoutProps } from '../types';
 import { APP_ROUTES } from '../api/constants';
 

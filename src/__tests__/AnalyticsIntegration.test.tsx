@@ -1,7 +1,7 @@
 // frontend/src/__tests__/AnalyticsIntegration.test.tsx
 import React from 'react';
 import { render, screen, act } from '@testing-library/react';
-import { MemoryRouter, Routes, Route, Link } from 'react-router-dom';
+import { MemoryRouter, Routes, Route, Link } from 'react-router';
 import { useGoogleAnalytics } from '../hooks/useGoogleAnalytics';
 import * as analytics from '../utils/analytics';
 

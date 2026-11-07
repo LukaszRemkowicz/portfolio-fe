@@ -1,4 +1,4 @@
-import { matchPath } from 'react-router-dom';
+import { matchPath } from 'react-router';
 import { APP_ROUTES } from '../api/constants';
 
 interface FeatureRouteSettings {

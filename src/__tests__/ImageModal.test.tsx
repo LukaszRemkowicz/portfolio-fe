@@ -1,6 +1,6 @@
 // frontend/src/__tests__/ImageModal.test.tsx
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router';
 import ImageModal from '../components/common/ImageModal';
 import { AstroImage } from '../types';
 import { useAstroImageDetail } from '../hooks/useAstroImageDetail';

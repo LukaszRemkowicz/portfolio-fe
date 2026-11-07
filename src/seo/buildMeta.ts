@@ -6,6 +6,39 @@ export interface SeoDefaults {
   defaultDescription: string;
 }
 
+/** Route-specific SEO inputs computed by loaders (translated strings live there). */
+export interface RouteSeo {
+  title?: string | null;
+  description?: string | null;
+  ogImage?: string | null;
+  url?: string | null;
+  robots?: string | null;
+  includeCanonical?: boolean;
+}
+
+/** What NotFoundPage's <SEO> produced. */
+export const NOT_FOUND_SEO: RouteSeo = {
+  title: 'Page Not Found',
+  description: 'The requested page could not be found on this site.',
+  robots: 'noindex, nofollow',
+  includeCanonical: false,
+};
+
+/** Meta for a route: its loader's `seo` plus root loader data (origin, defaults). */
+export function routeMeta(
+  seo: RouteSeo | undefined,
+  root: { seoDefaults: SeoDefaults; requestOrigin: string } | undefined,
+  location: { pathname: string; search: string }
+): MetaDescriptor[] {
+  if (!seo || !root) return [];
+  return buildMeta({
+    ...seo,
+    seoDefaults: root.seoDefaults,
+    requestOrigin: root.requestOrigin,
+    location,
+  });
+}
+
 export interface BuildMetaOptions {
   title?: string | null;
   description?: string | null;
