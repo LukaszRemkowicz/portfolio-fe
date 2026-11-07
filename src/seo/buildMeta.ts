@@ -1,0 +1,60 @@
+import type { MetaDescriptor } from 'react-router';
+
+/** Translated site-wide defaults, computed once per request by the root loader. */
+export interface SeoDefaults {
+  defaultTitle: string;
+  defaultDescription: string;
+}
+
+export interface BuildMetaOptions {
+  title?: string | null;
+  description?: string | null;
+  ogImage?: string | null;
+  /** Route path (+ search); defaults to `location`. */
+  url?: string | null;
+  robots?: string | null;
+  includeCanonical?: boolean;
+  /** Route-meta inputs: root loader data and the current location. */
+  seoDefaults: SeoDefaults;
+  requestOrigin: string;
+  location: { pathname: string; search: string };
+}
+
+/** Port of components/common/SEO.tsx; same tags, same order as Helmet rendered. */
+export function buildMeta({
+  title,
+  description,
+  ogImage,
+  url,
+  robots,
+  includeCanonical = true,
+  seoDefaults,
+  requestOrigin,
+  location,
+}: BuildMetaOptions): MetaDescriptor[] {
+  const finalTitle = title
+    ? `${title} | ${seoDefaults.defaultTitle}`
+    : seoDefaults.defaultTitle;
+  const finalDescription = description || seoDefaults.defaultDescription;
+  const routePath = url || `${location.pathname}${location.search}`;
+  const finalUrl = new URL(routePath || '/', requestOrigin).toString();
+
+  return [
+    { title: finalTitle },
+    { name: 'description', content: finalDescription },
+    ...(robots ? [{ name: 'robots', content: robots }] : []),
+    { property: 'og:type', content: 'website' },
+    { property: 'og:url', content: finalUrl },
+    { property: 'og:title', content: finalTitle },
+    { property: 'og:description', content: finalDescription },
+    ...(ogImage ? [{ property: 'og:image', content: ogImage }] : []),
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:url', content: finalUrl },
+    { name: 'twitter:title', content: finalTitle },
+    { name: 'twitter:description', content: finalDescription },
+    ...(ogImage ? [{ name: 'twitter:image', content: ogImage }] : []),
+    ...(includeCanonical
+      ? [{ tagName: 'link' as const, rel: 'canonical', href: finalUrl }]
+      : []),
+  ];
+}

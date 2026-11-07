@@ -1,19 +1,12 @@
 import { type FC } from 'react';
 import { Link } from 'react-router-dom';
 import { APP_ROUTES } from '../api/constants';
-import SEO from './common/SEO';
 import StarBackground from './StarBackground';
 import styles from '../styles/components/NotFoundPage.module.css';
 
 const NotFoundPage: FC = () => {
   return (
     <>
-      <SEO
-        title='Page Not Found'
-        description='The requested page could not be found on this site.'
-        robots='noindex, nofollow'
-        includeCanonical={false}
-      />
       <StarBackground />
       <section className={styles.section}>
         <header className={styles.header}>

@@ -218,6 +218,8 @@ export function createApiClient(
   const client = axios.create({
     baseURL: API_BASE_URL,
     headers: defaultHeaders,
+    // Workers have no Node http/XHR; use fetch on the server.
+    ...(typeof window === 'undefined' ? { adapter: 'fetch' } : {}),
   });
 
   attachLanguageInterceptor(client, getLanguage);

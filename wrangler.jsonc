@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "portfolio-fe",
+  "main": "./workers/app.ts",
+  "compatibility_date": "2025-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  // Non-secret public runtime config. Local-dev defaults; override per
+  // environment (see .dev.vars.example). Exposed to code via process.env.
+  "vars": {
+    "ENVIRONMENT": "development",
+    "SITE_DOMAIN": "portfolio.local",
+    "API_URL": "https://api.portfolio.local",
+    "GA_TRACKING_ID": "",
+    "ENABLE_GA": "false",
+    "SENTRY_DSN_FE": "",
+    "PROJECT_OWNER": "Portfolio Owner",
+    "SSR_API_URL": "http://127.0.0.1:8765"
+  }
+}
