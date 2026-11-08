@@ -50,7 +50,7 @@ Tip: `PLAYWRIGHT_CHANNEL=chrome npx playwright test` uses the installed Chrome. 
 
 ## Versioning and CI
 
-`VERSION` and `package.json` `version` must match (checked in CI). `.github/workflows/ci-cd.yml` runs lint/format/type-check, Jest with coverage, Playwright e2e, staging and production build + `wrangler deploy --dry-run`, Trivy and `audit-ci`.
+`VERSION` and `package.json` `version` must match (checked in CI). `.github/workflows/ci-cd.yml` runs lint/format/type-check, Jest with coverage, Playwright e2e, staging and production build + `wrangler deploy --dry-run`, Trivy and `audit-ci`. `.github/workflows/release.yml`: a new `VERSION` merged to `main` is tagged `v<VERSION>` and deployed to the `portfolio-fe-production` Worker (needs `CLOUDFLARE_API_TOKEN`, see `.github/SECRETS.md`).
 
 ## Public routes
 
