@@ -31,12 +31,16 @@ const decodeEntities = (text: string): string =>
 export const stripHtml = (html: string): string => {
   if (!html) return '';
 
-  // Drop any '<' left after tag removal (e.g. from `<<b>script>`), so no tag
-  // can survive; real '<' text arrives as &lt; and is decoded afterwards.
-  const text = html
-    .replace(BLOCK_TAG, ' ')
-    .replace(/<[^>]*>/g, '')
-    .replace(/</g, '');
+  // Strip tags until nothing changes: one pass can rebuild a tag from nested
+  // input like `<<b>script>`. Then drop any stray '<' (unclosed tag); real '<'
+  // text arrives as &lt; and is decoded afterwards.
+  let text = html.replace(BLOCK_TAG, ' ');
+  let previous;
+  do {
+    previous = text;
+    text = text.replace(/<[^>]*>/g, '');
+  } while (text !== previous);
+  text = text.replace(/</g, '');
 
   return decodeEntities(text).replace(/\s+/g, ' ').trim();
 };
