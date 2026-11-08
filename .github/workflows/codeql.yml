@@ -1,0 +1,17 @@
+name: "CodeQL Security Analysis"
+
+on:
+  pull_request:
+  schedule:
+    - cron: "0 0 * * 0"
+
+jobs:
+  analyze:
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    uses: LukaszRemkowicz/ci-cd/.github/workflows/codeql.yml@main
+    with:
+      languages_json: '["javascript"]'
+      config_file: .github/codeql-config.yml

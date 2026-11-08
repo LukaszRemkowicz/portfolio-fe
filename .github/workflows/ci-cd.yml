@@ -1,0 +1,111 @@
+name: CI/CD
+
+on:
+  pull_request:
+
+env:
+  PROJECT_OWNER: "GitHub Actions"
+  ENVIRONMENT: production
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  frontend-quality:
+    uses: LukaszRemkowicz/ci-cd/.github/workflows/node-quality.yml@main
+    with:
+      install_command: npm ci
+      lint_command: npm run lint
+      format_check_command: npm run format:check
+      type_check_command: npm run type-check
+
+  frontend-tests:
+    uses: LukaszRemkowicz/ci-cd/.github/workflows/node-tests.yml@main
+    with:
+      install_command: npm ci
+      test_command: npm test -- --coverage --watchAll=false
+
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: CI=1 npx playwright test
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  worker-build-check:
+    name: Worker Build Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+      - run: npm ci
+      - name: Check package.json version matches VERSION
+        run: |
+          pkg="$(node -p "require('./package.json').version")"
+          ver="$(tr -d '[:space:]' < VERSION)"
+          if [ "$pkg" != "$ver" ]; then
+            echo "package.json ($pkg) != VERSION ($ver)"; exit 1
+          fi
+      # CLOUDFLARE_ENV at build time bakes the env into the redirected config
+      # (build/server/wrangler.json); `wrangler deploy --env` is not used.
+      - name: Build and dry-run deploy (staging)
+        run: |
+          CLOUDFLARE_ENV=staging npm run build
+          npx wrangler deploy --dry-run --outdir dist-worker-staging
+      - name: Build and dry-run deploy (production)
+        run: |
+          CLOUDFLARE_ENV=production npm run build
+          npx wrangler deploy --dry-run --outdir dist-worker-production
+
+  trivy-scan:
+    needs: [frontend-quality, frontend-tests]
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    uses: LukaszRemkowicz/ci-cd/.github/workflows/trivy-scan.yml@main
+
+  dependency-security:
+    name: Dependency Security Checks
+    runs-on: ubuntu-latest
+    needs: [frontend-quality, frontend-tests]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+      - run: npm ci
+      - run: npm run audit:ci
+
+  pr-status:
+    needs: [frontend-quality, frontend-tests, e2e, worker-build-check, trivy-scan, dependency-security]
+    if: always()
+    uses: LukaszRemkowicz/ci-cd/.github/workflows/pr-status.yml@main
+    with:
+      status_items_json: >-
+        {"Frontend Quality":"${{ needs.frontend-quality.result }}","Frontend Tests":"${{ needs.frontend-tests.result }}","E2E":"${{ needs.e2e.result }}","Worker Build Check":"${{ needs.worker-build-check.result }}","Trivy Security Analysis":"${{ needs.trivy-scan.result }}","Dependency Security Checks":"${{ needs.dependency-security.result }}"}
+      success_message: 🎉 **All checks passed!**
+      failure_message: ⚠️ **Some checks failed. Please review the logs.**

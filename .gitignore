@@ -11,3 +11,4 @@ test-results/
 .env.*
 .DS_Store
 !.dev.vars.example
+dist-worker*/
