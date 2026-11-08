@@ -1,25 +1,39 @@
 import { FilterXSS, escapeHtml, escapeAttrValue, friendlyAttrValue } from 'xss';
 
+const BLOCK_TAG =
+  /<\/?(?:p|div|br|hr|li|ul|ol|dl|dt|dd|h[1-6]|blockquote|pre|table|thead|tbody|tfoot|tr|td|th|caption|figure|figcaption|section|article|header|footer|aside|nav|main)\b[^>]*>/gi;
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+};
+
+const decodeEntities = (text: string): string =>
+  text.replace(/&(#x[\da-f]+|#\d+|[a-z]+);/gi, (entity, code: string) => {
+    if (code[0] !== '#') return NAMED_ENTITIES[code.toLowerCase()] ?? entity;
+    const point = parseInt(
+      code.slice(code[1] === 'x' || code[1] === 'X' ? 2 : 1),
+      code[1] === 'x' || code[1] === 'X' ? 16 : 10
+    );
+    return point > 0 && point <= 0x10ffff
+      ? String.fromCodePoint(point)
+      : entity;
+  });
+
 /**
- * Utility function to strip HTML tags from a string.
- * Useful for card descriptions, meta tags, and SEO.
+ * Plain text from HTML for card descriptions, meta tags, and SEO.
+ * Pure string logic (no DOM) so SSR and hydration produce identical text:
+ * block tags become spaces, inline tags vanish, whitespace collapses.
  */
 export const stripHtml = (html: string): string => {
   if (!html) return '';
 
-  if (typeof DOMParser === 'undefined') {
-    // Server-side fallback: strip tags and normalize spacing without decoding
-    // entities into raw characters in the regex path.
-    return html
-      .replace(/<[^>]*>/g, ' ')
-      .replace(/&nbsp;/gi, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
-
-  // Use a DOM-based approach for reliability
-  const doc = new DOMParser().parseFromString(html, 'text/html');
-  return doc.body.textContent || '';
+  return decodeEntities(html.replace(BLOCK_TAG, ' ').replace(/<[^>]*>/g, ''))
+    .replace(/\s+/g, ' ')
+    .trim();
 };
 
 /**

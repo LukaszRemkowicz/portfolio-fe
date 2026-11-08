@@ -65,8 +65,9 @@ const astroSrc = [
     'orion-nebula',
     'Mgławica Oriona',
     'Orion Nebula',
-    'Opis mgławicy Oriona',
-    'Description of the Orion Nebula',
+    // Rich HTML (inline + block tags, entity) guards stripHtml SSR/client parity.
+    '<p>Opis <strong>mgławicy</strong> Oriona</p><p>Druga&nbsp;linia.</p>',
+    '<p>Description of the <strong>Orion</strong> Nebula</p><p>Second&nbsp;line.</p>',
     '2024-01-15',
   ],
   [

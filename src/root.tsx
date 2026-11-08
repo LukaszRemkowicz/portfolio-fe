@@ -219,11 +219,14 @@ export default function Root({ loaderData }: Route.ComponentProps) {
   );
   const [hasConsented, setHasConsented] = useState(() => hasAnalyticsConsent());
 
-  // Invalidate all queries on language change so server-translated data is re-fetched
+  // On language change refetch server-translated data. Queries keyed by the new
+  // language fetch on their own; invalidating them too would fetch twice.
   useEffect(() => {
-    const onLanguageChanged = () => {
+    const onLanguageChanged = (language: string) => {
       startTransition(() => {
-        void queryClient.invalidateQueries();
+        void queryClient.invalidateQueries({
+          predicate: query => !query.queryKey.includes(language),
+        });
       });
       // LanguageSwitcher writes the i18next cookie before changeLanguage, so the
       // root loader now returns the new language, <html lang> and SEO meta.
