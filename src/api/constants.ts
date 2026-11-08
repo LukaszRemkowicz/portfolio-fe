@@ -4,7 +4,7 @@
  * This module resolves the correct API base URL for both SSR and browser
  * environments and keeps route-independent constants in one place.
  */
-import { publicEnv } from '../../server/publicEnv.js';
+import { publicEnv } from '../utils/publicEnv';
 
 const SSR_API_BASE_URL =
   typeof window === 'undefined' && typeof process !== 'undefined'

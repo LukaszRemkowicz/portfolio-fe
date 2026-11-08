@@ -8,8 +8,8 @@ function firstValue(value: string | null): string {
 
 /**
  * Public request origin: X-Forwarded-Proto/Host first, then Host.
- * Port of server/requestMeta.js (protocol falls back to the request URL's, which on
- * Workers is the real public scheme, instead of a hardcoded http).
+ * Protocol falls back to the request URL's, which on
+ * Workers is the real public scheme, instead of a hardcoded http.
  */
 export function getRequestOrigin(request: Request): string {
   const url = new URL(request.url);
@@ -25,7 +25,7 @@ export function getRequestOrigin(request: Request): string {
   return `${proto}://${host}`;
 }
 
-/** Cookie `i18next` first, then Accept-Language, default en (server/index.mjs). */
+/** Cookie `i18next` first, then Accept-Language, default en. */
 export function getRequestLanguage(request: Request): SupportedLanguage {
   const cookieLang = request.headers
     .get('cookie')

@@ -122,3 +122,14 @@ test('/health returns 200 JSON', async ({ request }) => {
   expect(res.headers()['content-type']).toContain('application/json');
   expect(await res.json()).toEqual({ status: 'ok' });
 });
+
+test('robots.txt is served by the resource route without placeholders', async ({
+  request,
+}) => {
+  const res = await request.get('/robots.txt', { headers: HEADERS });
+  expect(res.status()).toBe(200);
+  expect(res.headers()['content-type']).toMatch(/^text\/plain/);
+  const text = await res.text();
+  expect(text).toContain('Sitemap: https://');
+  expect(text).not.toContain('__SITE_DOMAIN__');
+});

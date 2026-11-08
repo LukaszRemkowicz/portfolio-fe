@@ -1,5 +1,5 @@
-import { publicEnv, resolvePublicEnv } from '../../../server/publicEnv.js';
-import { logRequest } from '../../../server/logging.js';
+import { publicEnv, resolvePublicEnv } from '../../utils/publicEnv';
+import { logRequest } from '../logging';
 import { getRequestOrigin } from '../../utils/requestMeta';
 import { normalizeBffPayload } from './media';
 import { getFrontendTransportRoute } from './routes';
@@ -81,7 +81,7 @@ async function readUpstreamPayload(response: Response): Promise<unknown> {
 
 /**
  * Frontend-owned transport (BFF): maps `/app/*` browser calls to the Django API.
- * Fetch API port of server/backendProxy.js.
+ * Proxies BFF requests to the Django backend (Fetch API).
  */
 export async function handleBffRequest(
   request: Request,

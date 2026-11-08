@@ -129,7 +129,10 @@ describe('route loaders', () => {
     );
     const missing = await run(travelLoader, '/travel/x/y/2020-01-01', params);
     expect(status(missing)).toBe(404);
-    expect(body(missing).seo).toMatchObject({ title: 'Travel Highlights' });
+    expect(body(missing).seo).toMatchObject({
+      title: 'Page Not Found',
+      robots: 'noindex, nofollow',
+    });
 
     (fetchTravelHighlightDetail as jest.Mock).mockResolvedValueOnce({
       full_location: 'Krakow, Poland',

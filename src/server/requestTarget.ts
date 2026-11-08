@@ -1,6 +1,5 @@
 /**
- * True when the request target has invalid percent-encoding (port of
- * server/requestValidation.js assertValidRequestTarget). Such probes get a
+ * True when the request target has invalid percent-encoding. Such probes get a
  * compact 400 instead of reaching routing.
  */
 export function isMalformedRequestTarget(requestUrl: string): boolean {

@@ -12,7 +12,7 @@ import {
   createLoaderRequestContext,
   fetchQueryOrNotFound,
 } from '../utils/loaderData';
-import { routeMeta } from '../seo/buildMeta';
+import { NOT_FOUND_SEO, routeMeta } from '../seo/buildMeta';
 import type { RouteSeo } from '../seo/buildMeta';
 import { stripHtml, truncateText } from '../utils/html';
 
@@ -63,10 +63,19 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
       ? getMediaUrl(detail.background_image)
       : undefined,
   };
-  const body = { dehydratedState: dehydrate(queryClient), seo };
 
-  // Missing entry: same UI as before, only the HTTP status changes (200 -> 404).
-  return notFound ? data(body, { status: 404 }) : body;
+  // Missing entry: same UI as before, only the HTTP status changes (200 -> 404);
+  // seo mirrors astrophotography.detail (generic title + noindex).
+  if (notFound) {
+    return data(
+      {
+        dehydratedState: dehydrate(queryClient),
+        seo: NOT_FOUND_SEO as RouteSeo,
+      },
+      { status: 404 }
+    );
+  }
+  return { dehydratedState: dehydrate(queryClient), seo };
 }
 
 export function meta({ data, matches, location }: Route.MetaArgs) {

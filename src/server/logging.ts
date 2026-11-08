@@ -14,7 +14,7 @@ function getTimestamp() {
     .replace(', ', 'T');
 }
 
-function sanitize(value) {
+function sanitize(value: unknown): unknown {
   if (value === null || value === undefined) {
     return '';
   }
@@ -42,7 +42,9 @@ function sanitize(value) {
   return value;
 }
 
-function writeJsonLog(level, payload) {
+type LogPayload = Record<string, unknown>;
+
+function writeJsonLog(level: string, payload: LogPayload) {
   const normalized = {
     timestamp: getTimestamp(),
     service: 'frontend-ssr',
@@ -58,32 +60,32 @@ function writeJsonLog(level, payload) {
   console.log(line);
 }
 
-export function logEvent(payload, requestId) {
+export function logEvent(payload: LogPayload, requestId?: string) {
   writeJsonLog('INFO', {
     request_id: requestId || '',
     ...payload,
   });
 }
 
-export function logWarning(payload, requestId) {
+export function logWarning(payload: LogPayload, requestId?: string) {
   writeJsonLog('WARNING', {
     request_id: requestId || '',
     ...payload,
   });
 }
 
-export function logError(payload, requestId) {
+export function logError(payload: LogPayload, requestId?: string) {
   writeJsonLog('ERROR', {
     request_id: requestId || '',
     ...payload,
   });
 }
 
-export function logRequest(info, requestId) {
+export function logRequest(info: LogPayload, requestId?: string) {
   logEvent(info, requestId);
 }
 
-export function toErrorPayload(error) {
+export function toErrorPayload(error: unknown) {
   if (error instanceof Error) {
     return {
       error_name: error.name,

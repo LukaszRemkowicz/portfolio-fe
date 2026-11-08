@@ -13,7 +13,7 @@
  */
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import { API_BASE_URL } from './routes';
-import { publicEnv } from '../../server/publicEnv.js';
+import { publicEnv } from '../utils/publicEnv';
 import {
   NetworkError,
   NotFoundError,

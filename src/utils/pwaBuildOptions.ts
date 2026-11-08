@@ -16,7 +16,7 @@ export function createPwaOptions(
       navigateFallback: '',
       globIgnores: ['**/index.html'],
     },
-    includeAssets: ['favicon.ico', 'robots.txt', 'logo192.png', 'logo512.png'],
+    includeAssets: ['favicon.ico', 'logo192.png', 'logo512.png'],
     manifest: {
       short_name: owner,
       name: `${owner} - Portfolio & Astrophotography`,

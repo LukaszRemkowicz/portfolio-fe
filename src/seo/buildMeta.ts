@@ -53,7 +53,7 @@ export interface BuildMetaOptions {
   location: { pathname: string; search: string };
 }
 
-/** Port of components/common/SEO.tsx; same tags, same order as Helmet rendered. */
+/** Same tags and order the former react-helmet <SEO> component rendered. */
 export function buildMeta({
   title,
   description,

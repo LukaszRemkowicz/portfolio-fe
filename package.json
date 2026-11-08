@@ -8,13 +8,6 @@
     "dev": "react-router dev",
     "start": "react-router dev",
     "build": "npm run type-check && react-router build",
-    "build:client": "vite build -c vite.config.legacy.ts",
-    "build:server": "vite build -c vite.config.legacy.ts --ssr ../src/entry-server.tsx --outDir ../dist/server",
-    "build:ssr": "npm run build:client && npm run build:server",
-    "dev:ssr": "node --watch --watch-path=src/api --watch-path=src/components --watch-path=src/context --watch-path=src/hooks --watch-path=src/styles --watch-path=src/types --watch-path=src/utils --watch-path=src/App.tsx --watch-path=src/AppShell.tsx --watch-path=src/HomePage.tsx --watch-path=src/entry-client.tsx --watch-path=src/entry-server.tsx --watch-path=src/i18n.client.ts --watch-path=src/i18n.server.ts --watch-path=src/i18n.ts --watch-path=src/index.tsx --watch-path=src/service-worker.ts --watch-path=server --watch-path=public --watch-path=legacy/index.html scripts/dev-ssr.mjs",
-    "serve:ssr": "node server/index.mjs",
-    "serve:runtime": "node scripts/start-runtime.mjs",
-    "cache:clear:ssr": "node scripts/clear-ssr-cache.mjs",
     "preview": "npm run build && vite preview",
     "deploy:dry-run": "wrangler deploy --dry-run --outdir dist-worker",
     "test": "jest",
@@ -28,7 +21,6 @@
     "type-check": "react-router typegen && tsc --noEmit",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "smoke:ssr": "tsx scripts/ssr-smoke-test.ts",
     "ci": "npm run type-check && npm run lint && npm run format:check && npm run build && npm run test:coverage"
   },
   "dependencies": {
@@ -44,12 +36,9 @@
     "qs": "^6.15.0",
     "react": "^18.0.0",
     "react-dom": "^18.2.0",
-    "react-helmet-async": "^2.0.5",
     "react-i18next": "^16.5.4",
     "react-router": "7.18.2",
-    "web-vitals": "^2.1.4",
-    "xss": "1.0.17",
-    "zustand": "^5.0.11"
+    "xss": "1.0.17"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
@@ -67,7 +56,6 @@
     "@types/node": "^24.0.0",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
-    "@vitejs/plugin-react": "^4.0.0",
     "audit-ci": "7.1.0",
     "babel-plugin-istanbul": "^7.0.1",
     "babel-plugin-transform-vite-meta-env": "^1.0.3",
@@ -81,7 +69,6 @@
     "jest-environment-jsdom": "^30.2.0",
     "prettier": "^3.0.0",
     "test-exclude": "^7.0.1",
-    "tsx": "^4.22.4",
     "typescript": "^5.0.0",
     "typescript-eslint": "^8.56.1",
     "vite": "^6.4.2",

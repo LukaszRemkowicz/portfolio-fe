@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import styles from '../styles/components/Footer.module.css';
 import { Sparkles } from 'lucide-react';
 import { useProfile } from '../hooks/useProfile';
-import { publicEnv } from '../../server/publicEnv.js';
+import { publicEnv } from '../utils/publicEnv';
 
 import { useTranslation } from 'react-i18next';
 

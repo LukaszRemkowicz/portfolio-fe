@@ -58,7 +58,7 @@ export default {
       error = e;
       throw e;
     } finally {
-      // Mirrors server/logging.js fields; only failures are logged here.
+      // Mirrors src/server/logging.ts fields; only failures are logged here.
       if (error || status >= 500) {
         console.error(
           JSON.stringify({

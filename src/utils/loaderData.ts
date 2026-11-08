@@ -1,7 +1,7 @@
 import { QueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api/api';
 import { createServerI18n } from '../i18n.server';
-import { logWarning, toErrorPayload } from '../../server/logging.js';
+import { logWarning, toErrorPayload } from '../server/logging';
 import { getRequestLanguage, getRequestOrigin } from './requestMeta';
 
 /** Request-scoped QueryClient for route loaders (discarded after dehydration). */

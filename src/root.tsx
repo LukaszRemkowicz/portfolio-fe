@@ -49,9 +49,9 @@ import {
   LANGUAGE_BOOTSTRAP_SCRIPT,
 } from './criticalHead';
 import styles from './styles/components/App.module.css';
-import { publicEnv, resolvePublicEnv } from '../server/publicEnv.js';
+import { publicEnv, resolvePublicEnv } from './utils/publicEnv';
 
-/** Escape serialized state for safe inline HTML embedding (server/documentRender.js). */
+/** Escape serialized state for safe inline HTML embedding. */
 function serializeForHtml(state: unknown): string {
   return JSON.stringify(state)
     .replace(/</g, '\\u003c')

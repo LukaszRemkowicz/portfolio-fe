@@ -1,5 +1,5 @@
 /**
- * Public environment helpers shared by the frontend server and browser runtime.
+ * Public environment helpers shared by the Worker (SSR) and browser runtime.
  *
  * These helpers define the frontend's public configuration contract and handle
  * reading that data from the appropriate source:
@@ -8,22 +8,15 @@
  * - `process.env` on the server
  * - `import.meta.env` during Vite build time
  *
- * The same module also owns HTML placeholder replacement so public metadata
- * such as `SITE_DOMAIN` and `PROJECT_OWNER` stay defined in one place.
+ * `SITE_DOMAIN` and `PROJECT_OWNER` stay defined in one place.
  */
 
-const TEMPLATE_PLACEHOLDERS = {
-  API_URL: '__API_ORIGIN__',
-  GA_TRACKING_ID: '__GA_TRACKING_ID__',
-  ENABLE_GA: '__ENABLE_GA__',
-  PROJECT_OWNER: '__PROJECT_OWNER__',
-  SITE_DOMAIN: '__SITE_DOMAIN__',
-};
+import type { PublicEnvSchema } from './env';
 
 /**
  * Read runtime-injected public env from the browser when available.
  */
-function getWindowEnv() {
+function getWindowEnv(): Partial<PublicEnvSchema> | null {
   if (typeof window === 'undefined') {
     return null;
   }
@@ -34,7 +27,7 @@ function getWindowEnv() {
 /**
  * Read a public env key from Node `process.env`.
  */
-function readProcessEnv(key) {
+function readProcessEnv(key: string): string {
   if (typeof process === 'undefined') {
     return '';
   }
@@ -45,7 +38,7 @@ function readProcessEnv(key) {
 /**
  * Read a public env key from Vite build-time environment variables.
  */
-function readViteEnv(key) {
+function readViteEnv(key: string): string {
   try {
     const viteEnv = Function('return import.meta?.env')();
     return viteEnv?.[`VITE_${key}`] || '';
@@ -57,7 +50,7 @@ function readViteEnv(key) {
 /**
  * Resolve a public env key from browser, process, or Vite env sources.
  */
-function readPublicEnv(key, fallback = '') {
+function readPublicEnv(key: keyof PublicEnvSchema, fallback = ''): string {
   return (
     getWindowEnv()?.[key] || readProcessEnv(key) || readViteEnv(key) || fallback
   );
@@ -66,7 +59,9 @@ function readPublicEnv(key, fallback = '') {
 /**
  * Build the frontend public env object, optionally applying explicit overrides.
  */
-function createPublicEnv(overrides = {}) {
+function createPublicEnv(
+  overrides: Partial<PublicEnvSchema> = {}
+): PublicEnvSchema {
   const SITE_DOMAIN =
     overrides.SITE_DOMAIN ||
     readPublicEnv(
@@ -97,18 +92,8 @@ export const publicEnv = Object.freeze(createPublicEnv());
 /**
  * Create a request-aware public env snapshot without mutating the shared base env.
  */
-export function resolvePublicEnv(overrides = {}) {
+export function resolvePublicEnv(
+  overrides: Partial<PublicEnvSchema> = {}
+): Readonly<PublicEnvSchema> {
   return Object.freeze(createPublicEnv(overrides));
-}
-
-/**
- * Replace HTML template placeholders with public env values.
- */
-export function replacePublicEnvPlaceholders(template, env = publicEnv) {
-  return Object.entries(TEMPLATE_PLACEHOLDERS).reduce(
-    (output, [key, placeholder]) => {
-      return output.replaceAll(placeholder, env[key] || '');
-    },
-    template
-  );
 }
