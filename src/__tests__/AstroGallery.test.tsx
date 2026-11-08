@@ -7,7 +7,7 @@ import {
   within,
   fireEvent,
 } from '@testing-library/react';
-import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import '@testing-library/jest-dom';
 import AstroGallery from '../components/AstroGallery';
 import { AstroImage, Tag } from '../types';
@@ -445,7 +445,7 @@ describe('AstroGallery Component', () => {
     expect(screen.queryByText('Gallery')).not.toBeInTheDocument();
   });
 
-  it('uses and self-canonicalizes the requested page without auto-loading additional pages', async () => {
+  it('uses the requested page without auto-loading additional pages', async () => {
     const fetchNextPage = jest.fn();
 
     (useAstroImages as jest.Mock).mockReturnValue({
@@ -484,10 +484,7 @@ describe('AstroGallery Component', () => {
       expect.objectContaining({ page: 2 })
     );
     expect(fetchNextPage).not.toHaveBeenCalled();
-    expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute(
-      'href',
-      'http://localhost/astrophotography?page=2'
-    );
+    // Self-canonical for ?page=N is covered in routeLoaders.test.ts (route meta).
   });
 
   it('returns to the homepage when closing a modal opened from the homepage gallery', async () => {

@@ -1,0 +1,11 @@
+# Copy to .dev.vars (gitignored) to override wrangler.jsonc `vars` locally.
+# Used by `npm run dev`, `npm run preview` and `wrangler dev`.
+ENVIRONMENT=development
+SITE_DOMAIN=portfolio.local
+API_URL=https://api.portfolio.local
+GA_TRACKING_ID=
+ENABLE_GA=false
+SENTRY_DSN_FE=
+PROJECT_OWNER=Portfolio Owner
+# Server-side (Worker -> Django) API origin; default is the e2e mock backend.
+SSR_API_URL=http://127.0.0.1:8765

@@ -2,17 +2,12 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from '../styles/components/PrivacyPolicy.module.css';
-import SEO from './common/SEO';
 
 const PrivacyPolicy: React.FC = () => {
   const { t } = useTranslation();
 
   return (
     <>
-      <SEO
-        title={t('privacy.title')}
-        description={t('privacy.introduction.body')}
-      />
       <div className={styles.container}>
         <div className={styles.content}>
           <h1 className={styles.title}>{t('privacy.title')}</h1>

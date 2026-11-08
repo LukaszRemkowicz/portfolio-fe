@@ -1,0 +1,16 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+# Tag only. Deploy will be added in a separate cutover task.
+jobs:
+  tag-main:
+    uses: LukaszRemkowicz/ci-cd/.github/workflows/release-tag.yml@main
+    with:
+      version_file: VERSION
+      tag_prefix: v

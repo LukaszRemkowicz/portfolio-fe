@@ -1,69 +1,32 @@
-// frontend/vite.config.ts
 import { defineConfig } from 'vite';
-import type {
-  ConfigEnv,
-  HtmlTagDescriptor,
-  IndexHtmlTransformContext,
-  PluginOption,
-} from 'vite';
-import react from '@vitejs/plugin-react';
+import type { Plugin, UserConfig } from 'vite';
+import { cloudflare } from '@cloudflare/vite-plugin';
+import { reactRouter } from '@react-router/dev/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { createPwaOptions } from './src/utils/pwaBuildOptions';
 
-export default defineConfig(({ isSsrBuild }: ConfigEnv) => {
+/**
+ * vite-plugin-pwa for the client environment only. Its `ssr.noExternal` config
+ * hook breaks Vite's merge with the Cloudflare/RR worker environment config.
+ */
+function pwaClientOnly(): Plugin[] {
+  return VitePWA(
+    createPwaOptions(
+      process.env.ENVIRONMENT || process.env.VITE_ENVIRONMENT || 'development',
+      process.env.PROJECT_OWNER
+    )
+  ).map(plugin => ({
+    ...plugin,
+    config: undefined,
+    applyToEnvironment: env => env.name === 'client',
+  }));
+}
+
+export default defineConfig((): UserConfig => {
   const appEnvironment =
     process.env.ENVIRONMENT || process.env.VITE_ENVIRONMENT || 'development';
   const disablePwaEnvironments = ['development', 'dev', 'local'];
-  const enablePwa =
-    !isSsrBuild && !disablePwaEnvironments.includes(appEnvironment);
-
-  const criticalPathPlugin: PluginOption = !isSsrBuild
-    ? {
-        name: 'critical-path-optimization',
-        enforce: 'post',
-        transformIndexHtml: {
-          order: 'post',
-          handler(
-            html: string,
-            ctx?: IndexHtmlTransformContext
-          ): string | HtmlTagDescriptor[] {
-            const bootstrapScript = `<script>(function(){try{var lang=window.__INITIAL_LANGUAGE__||localStorage.getItem('i18nextLng')||'en';document.documentElement.lang=lang.split('-')[0];window.__INITIAL_LANGUAGE__=lang;}catch(_e){document.documentElement.lang='en';window.__INITIAL_LANGUAGE__='en';}})();</script>`;
-
-            html = html.replace(
-              /<link rel="modulepreload"[^>]*href="[^"]*sentry-[^"]*\.js"[^>]*>\s*/gi,
-              ''
-            );
-
-            if (ctx?.bundle) {
-              const entryChunk = Object.values(ctx.bundle).find(file => {
-                const chunk = file as {
-                  type?: string;
-                  isEntry?: boolean;
-                  fileName?: string;
-                };
-                return (
-                  chunk.type === 'chunk' &&
-                  chunk.isEntry === true &&
-                  typeof chunk.fileName === 'string' &&
-                  chunk.fileName.endsWith('.js')
-                );
-              }) as { fileName?: string } | undefined;
-
-              if (entryChunk?.fileName) {
-                html = html.replace(
-                  '</head>',
-                  `<link rel="modulepreload" href="/${entryChunk.fileName}" crossorigin>\n</head>`
-                );
-              }
-            }
-
-            html = html.replace('</head>', `${bootstrapScript}\n</head>`);
-
-            return html;
-          },
-        },
-      }
-    : null;
+  const enablePwa = !disablePwaEnvironments.includes(appEnvironment);
 
   return {
     esbuild: {
@@ -76,18 +39,14 @@ export default defineConfig(({ isSsrBuild }: ConfigEnv) => {
       ),
     },
     plugins: [
-      react(),
-      criticalPathPlugin,
-      enablePwa &&
-        VitePWA(createPwaOptions(appEnvironment, process.env.PROJECT_OWNER)),
+      cloudflare({ viteEnvironment: { name: 'ssr' } }),
+      reactRouter(),
+      enablePwa && pwaClientOnly(),
     ].filter(Boolean),
     css: {
       modules: {
         localsConvention: 'camelCaseOnly',
       },
-    },
-    ssr: {
-      noExternal: ['react-helmet-async'],
     },
     server: {
       host: '0.0.0.0',
@@ -103,43 +62,20 @@ export default defineConfig(({ isSsrBuild }: ConfigEnv) => {
             ? process.env.SITE_DOMAIN || 'stage.portfolio.local'
             : 'portfolio.local',
       },
-      warmup: {
-        clientFiles: ['./src/entry-client.tsx'],
-      },
     },
     preview: {
       host: '0.0.0.0',
       port: Number(process.env.FRONTEND_PORT) || 8080,
     },
+    environments: {
+      // Client sourcemaps stay on; the worker bundle ships none.
+      client: { build: { sourcemap: true } },
+      ssr: { build: { sourcemap: false } },
+    },
     build: {
       target: 'es2022',
-      outDir: isSsrBuild ? 'dist/server' : 'dist',
-      // The local SSR dev container rebuilds on file watch and can overlap
-      // client builds briefly. Avoid emptying dist in development to prevent
-      // ENOTEMPTY races while keeping production builds clean.
-      emptyOutDir:
-        appEnvironment === 'development' || appEnvironment === 'dev'
-          ? false
-          : undefined,
-      sourcemap: true,
-      rollupOptions: isSsrBuild
-        ? undefined
-        : {
-            output: {
-              manualChunks(id) {
-                if (id.includes('node_modules/@sentry')) {
-                  return 'sentry';
-                }
-                if (
-                  id.includes('node_modules/react') ||
-                  id.includes('node_modules/react-dom') ||
-                  id.includes('node_modules/react-router-dom')
-                ) {
-                  return 'vendor';
-                }
-              },
-            },
-          },
+      // vite-plugin-pwa reads the top-level outDir; keep it on the RR client output.
+      outDir: 'build/client',
     },
   };
 });

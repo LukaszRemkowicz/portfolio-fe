@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router';
 import styles from '../styles/components/TravelHighlightsPage.module.css';
 import { ASSETS } from '../api/routes';
 import { getMediaUrl } from '../api/media';
@@ -8,10 +8,9 @@ import ImageModal from './common/ImageModal';
 import ImageWithFallback from './common/ImageWithFallback';
 import LoadingScreen from './common/LoadingScreen';
 import StarBackground from './StarBackground';
-import { sanitizeHtml, stripHtml, truncateText } from '../utils/html';
+import { sanitizeHtml } from '../utils/html';
 import { useBackground } from '../hooks/useBackground';
 import { useImageUrls } from '../hooks/useImageUrls';
-import SEO from './common/SEO';
 import {
   useTravelHighlightDetail,
   ExtendedAstroImage,
@@ -122,28 +121,8 @@ const TravelHighlightsPage: React.FC = () => {
     );
   };
 
-  // Derive SEO description safely
-  const plainStoryPreview = story ? stripHtml(story).trim() : '';
-  const seoDescription = truncateText(
-    String(
-      highlightTitle ||
-        plainStoryPreview ||
-        `Travel highlights from ${fullLocation}`
-    ),
-    160
-  );
-
   return (
     <div className={styles.container}>
-      <SEO
-        title={fullLocation}
-        description={seoDescription}
-        ogImage={
-          locationBackgroundImage
-            ? getMediaUrl(locationBackgroundImage)
-            : undefined
-        }
-      />
       <StarBackground />
       <div
         className={styles.hero}

@@ -2,74 +2,25 @@ import { test, expect } from './fixtures';
 
 test.describe('Travel Highlights Page', () => {
   test.beforeEach(async ({ page }) => {
-    // Override specific endpoint for travel detail
-    await page.route('**/v1/travel/**', async route => {
-      return route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          country: 'Iceland',
-          full_location: 'Iceland',
-          place: null,
-          story: '<p>A land of fire and ice...</p>',
-          adventure_date: 'Jan 2026',
-          created_at: '2026-01-01T00:00:00Z',
-          highlight_name: 'Iceland Expedition',
-          background_image: 'https://via.placeholder.com/1920x1080',
-          images: [
-            {
-              pk: 101,
-              name: 'Northern Lights',
-              url: 'https://via.placeholder.com/800x600',
-              thumbnail_url: 'https://via.placeholder.com/200x150',
-              description: 'Dancing lights.',
-              slug: 'northern-lights',
-              location: 'Reykjavik',
-              place: { name: 'Reykjavik' },
-              camera: [{ model: 'Canon R6' }],
-              lens: [{ model: '14mm F1.8' }],
-              telescope: [],
-            },
-          ],
-        }),
-      });
-    });
-
-    // Mock specific image detail payload needed for ImageModal hook
-    await page.route('**/v1/astroimages/**', async route => {
-      return route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          pk: 101,
-          name: 'Northern Lights',
-          slug: 'northern-lights',
-          description: 'Dancing lights.',
-        }),
-      });
-    });
-
     // Navigate to the travel page (needs country, place, and date slugs)
-    await page.goto('/travel/iceland/reykjavik/jan-2026');
+    await page.goto('/travel/poland/krakow/2024-05-10');
   });
 
   test('should display the travel highlights content', async ({ page }) => {
     // Check main title (Country)
     await expect(
-      page.getByRole('heading', { name: 'Iceland' }).first()
+      page.getByRole('heading', { name: 'Krakow, Poland' }).first()
     ).toBeVisible();
 
-    // Check subtitle
-    await expect(
-      page.getByText(/Exploring the cosmic wonders/i).first()
-    ).toBeVisible();
+    // Check subtitle (backend highlight_title; the "Exploring the cosmic wonders" fallback only applies without one)
+    await expect(page.getByText('A Week in Krakow').first()).toBeVisible();
 
     // Check story title
-    await expect(page.getByText('Iceland Expedition').first()).toBeVisible();
+    await expect(page.getByText('Krakow Trip').first()).toBeVisible();
 
     // Check story content
     await expect(
-      page.getByText('A land of fire and ice...').first()
+      page.getByText('Full story of the Krakow trip.').first()
     ).toBeVisible();
   });
 
@@ -78,15 +29,17 @@ test.describe('Travel Highlights Page', () => {
   }) => {
     // Check if the title exists as a heading
     await expect(
-      page.getByRole('heading', { name: 'Northern Lights' }).first()
+      page.getByRole('heading', { name: 'Orion Nebula' }).first()
     ).toBeVisible();
 
     // Check description
-    await expect(page.getByText('Dancing lights.').first()).toBeVisible();
+    await expect(
+      page.getByText('Description of the Orion Nebula').first()
+    ).toBeVisible();
   });
 
   test('should open modal when clicking an image', async ({ page }) => {
-    const image = page.getByTestId('gallery-card-northern-lights').first();
+    const image = page.getByTestId('gallery-card-orion-nebula').first();
     await image.click();
 
     await page.waitForURL(/\?img=/, { timeout: 10000 });
@@ -95,7 +48,7 @@ test.describe('Travel Highlights Page', () => {
     const modal = page.getByTestId('image-modal');
     await expect(modal).toBeVisible({ timeout: 10000 });
     await expect(
-      modal.getByRole('heading', { name: 'Northern Lights' })
+      modal.getByRole('heading', { name: 'Orion Nebula' })
     ).toBeVisible();
   });
 });

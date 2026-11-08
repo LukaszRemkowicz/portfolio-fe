@@ -1,7 +1,7 @@
 // frontend/src/__tests__/PrivacyPolicy.test.tsx
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import PrivacyPolicy from '../components/PrivacyPolicy';
 
 describe('PrivacyPolicy Component', () => {

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 import { APP_ROUTES } from '../api/constants';
 import styles from '../styles/components/Gallery.module.css';
 import { AstroImage } from '../types';

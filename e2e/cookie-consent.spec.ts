@@ -1,29 +1,8 @@
 // frontend/e2e/cookie-consent.spec.ts
 import { test, expect } from './fixtures';
 
-test.beforeEach(async ({ page, context }) => {
-  // 1. Mock endpoints
-  await page.route('**/v1/profile/', async route =>
-    route.fulfill({ status: 200, body: JSON.stringify({}) })
-  );
-  await page.route('**/v1/background/', async route =>
-    route.fulfill({ status: 200, body: JSON.stringify({ url: '' }) })
-  );
-  await page.route('**/v1/settings/', async route => {
-    await route.fulfill({
-      status: 200,
-      body: JSON.stringify({
-        contactForm: true,
-        programming: true,
-        gallery: true,
-        lastimages: true,
-        travelHighlights: true,
-        meteors: null,
-      }),
-    });
-  });
-
-  // 2. Clear context
+test.beforeEach(async ({ context }) => {
+  // Clear context
   await context.clearCookies();
 });
 
@@ -32,11 +11,21 @@ test.describe('Cookie Consent & Privacy Policy', () => {
     // Go to home page
     await page.goto('/', { waitUntil: 'domcontentloaded' });
 
-    // Wait for app to be ready
+    // Wait for app to be ready: SSR HTML is visible before hydration, so wait
+    // for the client-side cookie-settings hook to be installed.
+    await page.waitForFunction(
+      () => typeof (window as any).openCookieSettings === 'function'
+    );
     await page.waitForFunction(
       () => !document.querySelector('[class*="loadingScreen"]')
     );
     await expect(page.getByText('Signal lost')).toBeHidden();
+
+    // First visit auto-opens the banner after a 100ms timer in CookieConsent;
+    // wait for it so that timer cannot re-open the banner after a test dismisses it.
+    await expect(
+      page.getByRole('heading', { name: 'Cookie Consent' })
+    ).toBeVisible();
   });
 
   test('hides banner and sets localStorage when Accept is clicked', async ({
@@ -270,6 +259,6 @@ test.describe('Privacy Policy Page', () => {
     await page.goto('/');
 
     // Verify we can still access the page
-    await expect(page).toHaveURL('http://localhost:3000/');
+    await expect(page).toHaveURL('/');
   });
 });
