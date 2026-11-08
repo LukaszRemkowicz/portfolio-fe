@@ -1,6 +1,6 @@
 import { act } from 'react';
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import TravelHighlights from '../components/TravelHighlights';
 import { useSettings } from '../hooks/useSettings';
 import { useTravelHighlights } from '../hooks/useTravelHighlights';

@@ -1,0 +1,15 @@
+name: Version Check
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  version-check:
+    uses: LukaszRemkowicz/ci-cd/.github/workflows/version-check.yml@main
+    with:
+      version_file: VERSION
+      base_branch: main
+      head_branch: dev

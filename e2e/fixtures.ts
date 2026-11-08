@@ -1,108 +1,47 @@
-import { test as base, type Route } from '@playwright/test';
+import { test as base } from '@playwright/test';
 
-// Define the type for our fixtures (we don't export specific values yet, just the auto-worker)
-type PortfolioFixtures = {
-  mockApi: void;
+/** Window globals the e2e specs read (set by the app or by the specs). */
+export type E2EWindow = Window & {
+  openCookieSettings?: () => void;
+  __stability_marker?: number;
 };
 
-export const test = base.extend<PortfolioFixtures>({
-  mockApi: [
+// Pages are SSR'd by the real worker against the mock backend; there are no
+// browser-level API mocks. This auto fixture fails tests on React hydration errors.
+const HYDRATION =
+  /Minified React error #(418|423|425)|Hydration failed|did not match|hydrat(e|ion) (error|mismatch)/i;
+
+export const test = base.extend<{ hydrationGuard: void }>({
+  hydrationGuard: [
     async ({ page }, use) => {
-      const fulfillMockApi = async (route: Route) => {
-        const url = route.request().url();
-
-        // 1. User Profile
-        if (url.includes('/profile/')) {
-          return route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify({
-              first_name: 'Test',
-              last_name: 'User',
-              short_description: 'Sky Hunter',
-            }),
-          });
-        }
-
-        // 2. Background Image
-        if (url.includes('/background/')) {
-          return route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify({
-              url: 'https://via.placeholder.com/1920x1080',
-            }),
-          });
-        }
-
-        // 3. Feature Flags (Enable ALL for max coverage by default)
-        if (url.includes('/settings/')) {
-          return route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify({
-              contactForm: true,
-              programming: true,
-              gallery: true,
-              lastimages: true,
-              travelHighlights: true,
-            }),
-          });
-        }
-
-        // 5. Categories
-        if (url.includes('/categories/')) {
-          return route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify([
-              'Deep Sky',
-              'Solar System',
-              'Landscape',
-              'Nature',
-            ]),
-          });
-        }
-
-        // 6. Default Image List (Empty by default, override in specific tests if needed)
-        // Note: gallery.spec.ts needs complex logic, so we let it fall through or it overrides this.
-        // But for "navigation" and "stability", empty is fine.
-        // We'll return "continue" for image endpoints if not handled here to allow overrides?
-        // No, Playwright routes are "first match wins" if defined later? Actually LATEST defined route handler executes FIRST.
-        // So if we define this here, test-specific 'page.route' calls inside the test will take precedence.
-
-        // 6. Default Image List (Empty by default, override in specific tests if needed)
-        // Note: gallery.spec.ts needs complex logic, so we let it fall through or it overrides this.
-        // But for "navigation" and "stability", empty is fine.
-        // We'll return "continue" for image endpoints if not handled here to allow overrides?
-        // No, Playwright routes are "first match wins" if defined later? Actually LATEST defined route handler executes FIRST.
-        // So if we define this here, test-specific 'page.route' calls inside the test will take precedence.
-
-        // Let's provide a safe default for images to avoid network errors
-        if (url.includes('/astroimages/')) {
-          // If the test didn't override this path, return empty list to prevent 404s
-          // But wait, allow the `continue()` call? No, we are mocking everything.
-          // We will fulfill with empty list as a safe default.
-          return route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify([]),
-          });
-        }
-
-        // Default: 200 OK empty list for anything else to prevent frontend crashing on uncaught fetch errors
-        return route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify([]),
-        });
+      const errors: string[] = [];
+      // SSR HTML is visible/clickable before hydration, so clicks right after
+      // goto() can be lost. Make goto() resolve only once the client is live.
+      const goto = page.goto.bind(page);
+      page.goto = async (url, options) => {
+        const res = await goto(url, options);
+        await page
+          .waitForFunction(
+            () =>
+              typeof (window as E2EWindow).openCookieSettings === 'function',
+            undefined,
+            { timeout: 15000 }
+          )
+          .catch(() => undefined);
+        return res;
       };
-
-      // Catch-all mock for backend and browser BFF API calls.
-      await page.route('**/v1/**', fulfillMockApi);
-      await page.route('**/app/**', fulfillMockApi);
-
+      page.on('console', msg => {
+        if (msg.type() === 'error' && HYDRATION.test(msg.text())) {
+          errors.push(msg.text());
+        }
+      });
+      page.on('pageerror', err => {
+        if (HYDRATION.test(err.message)) errors.push(err.message);
+      });
       await use();
+      if (errors.length) {
+        throw new Error(`Hydration errors:\n${errors.join('\n')}`);
+      }
     },
     { auto: true },
   ],

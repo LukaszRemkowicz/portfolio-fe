@@ -5,7 +5,7 @@ import {
   useParams,
   useNavigate,
   useLocation,
-} from 'react-router-dom';
+} from 'react-router';
 import { useTranslation } from 'react-i18next';
 import styles from '../styles/components/AstroGallery.module.css';
 import { ASSETS } from '../api/routes';
@@ -17,10 +17,8 @@ import GallerySkeleton from './skeletons/GallerySkeleton';
 import TagSidebar from './TagSidebar';
 import CategorySidebar from './CategorySidebar';
 import { Sliders, LayoutGrid } from 'lucide-react';
-import SEO from './common/SEO';
 import { useAstroImages } from '../hooks/useAstroImages';
 import { useTags } from '../hooks/useTags';
-import { APP_ROUTES } from '../api/constants';
 import { NotFoundError } from '../api/errors';
 import { useCategories } from '../hooks/useCategories';
 import { useBackground } from '../hooks/useBackground';
@@ -28,8 +26,6 @@ import {
   getAstroImageNotFoundQueryKey,
   useAstroImageDetail,
 } from '../hooks/useAstroImageDetail';
-import { getMediaUrl } from '../api/media';
-import { stripHtml, truncateText } from '../utils/html';
 import NotFoundPage from './NotFoundPage';
 import { buildResponsiveImageProps } from '../utils/imageVariants';
 
@@ -177,24 +173,6 @@ const AstroGallery: React.FC = () => {
       getAstroImageNotFoundQueryKey(language, imgSlug)
     ) === true;
 
-  const seoTitle = modalImage?.name || t('common.gallery');
-  const seoDescription = truncateText(
-    (modalImage?.description ? stripHtml(modalImage.description) : '').trim() ||
-      modalImage?.celestial_object ||
-      modalImage?.place?.name ||
-      t('common.gallerySubtitle'),
-    160
-  );
-  const seoImage = getMediaUrl(
-    modalImage?.fallback_image?.url || modalImage?.url
-  );
-  const gallerySeoUrl =
-    selectedPage && selectedPage > 1
-      ? `${APP_ROUTES.ASTROPHOTOGRAPHY}?page=${selectedPage}`
-      : APP_ROUTES.ASTROPHOTOGRAPHY;
-  const seoUrl = modalImage?.slug
-    ? `${APP_ROUTES.ASTROPHOTOGRAPHY}/${modalImage.slug}`
-    : gallerySeoUrl;
   const responsiveHeroImageProps = useMemo(
     () =>
       buildResponsiveImageProps({
@@ -422,12 +400,6 @@ const AstroGallery: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <SEO
-        title={seoTitle}
-        description={seoDescription}
-        ogImage={seoImage}
-        url={seoUrl}
-      />
       <div className={styles.hero}>
         <img
           {...responsiveHeroImageProps}

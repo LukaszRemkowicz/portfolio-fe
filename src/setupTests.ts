@@ -11,41 +11,51 @@ Object.defineProperty(global, 'TextDecoder', {
 
 const mockProjectOwner = process.env.PROJECT_OWNER || 'Portfolio Owner';
 
-window.__PUBLIC_ENV__ = {
-  API_URL:
-    process.env.API_URL || process.env.VITE_API_URL || 'http://localhost:8000',
-  GA_TRACKING_ID: process.env.VITE_GA_TRACKING_ID || 'G-TEST',
-  ENABLE_GA: process.env.VITE_ENABLE_GA || 'false',
-  SENTRY_DSN_FE: process.env.VITE_SENTRY_DSN_FE || '',
-  ENVIRONMENT: process.env.VITE_ENVIRONMENT || process.env.NODE_ENV || 'test',
-  PROJECT_OWNER: mockProjectOwner,
-  SITE_DOMAIN: process.env.SITE_DOMAIN || 'portfolio.local',
-};
+// Browser-only globals (skipped in `@jest-environment node` suites).
+if (typeof window !== 'undefined') {
+  window.__PUBLIC_ENV__ = {
+    API_URL:
+      process.env.API_URL ||
+      process.env.VITE_API_URL ||
+      'http://localhost:8000',
+    GA_TRACKING_ID: process.env.VITE_GA_TRACKING_ID || 'G-TEST',
+    ENABLE_GA: process.env.VITE_ENABLE_GA || 'false',
+    SENTRY_DSN_FE: process.env.VITE_SENTRY_DSN_FE || '',
+    ENVIRONMENT: process.env.VITE_ENVIRONMENT || process.env.NODE_ENV || 'test',
+    PROJECT_OWNER: mockProjectOwner,
+    SITE_DOMAIN: process.env.SITE_DOMAIN || 'portfolio.local',
+  };
+}
 
 // Ensure API_URL is defined for tests that directly use process.env (legacy paths)
 // Main env access is now via import.meta.env (shimmed in jest.config.js globals)
 
 // Mock window.matchMedia for components that use it (e.g., animations, responsive hooks)
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: (query: string) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: jest.fn(), // deprecated
-    removeListener: jest.fn(), // deprecated
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  }),
-});
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: (query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(), // deprecated
+      removeListener: jest.fn(), // deprecated
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    }),
+  });
+}
 
 // Mock crypto.randomUUID for JSDOM
-Object.defineProperty(window, 'crypto', {
-  value: {
-    randomUUID: () => 'test-uuid-' + Math.random().toString(36).substring(2, 9),
-  },
-});
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'crypto', {
+    value: {
+      randomUUID: () =>
+        'test-uuid-' + Math.random().toString(36).substring(2, 9),
+    },
+  });
+}
 
 // Suppress React Router v6 future flag warnings in tests
 // This can be done by configuring the router in individual tests or globally if using Data Router,
@@ -64,16 +74,6 @@ console.warn = (...args) => {
   }
   originalWarn(...args);
 };
-
-// Mock react-helmet-async
-jest.mock('react-helmet-async', () => {
-  return {
-    Helmet: ({ children }: { children?: React.ReactNode }) =>
-      children as React.ReactElement | null,
-    HelmetProvider: ({ children }: { children?: React.ReactNode }) =>
-      children as React.ReactElement | null,
-  };
-});
 
 // Mock react-i18next
 jest.mock('react-i18next', () => ({

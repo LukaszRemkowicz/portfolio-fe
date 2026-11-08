@@ -21,7 +21,7 @@ module.exports = {
   ],
   moduleNameMapper: {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
-    '^.+/server/publicEnv\\.js$': '<rootDir>/src/test-utils/publicEnv.mock.ts',
+    '^.+/utils/publicEnv$': '<rootDir>/src/test-utils/publicEnv.mock.ts',
   },
   testEnvironment: 'jsdom',
   collectCoverageFrom: [

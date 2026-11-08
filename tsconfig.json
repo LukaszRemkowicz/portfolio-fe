@@ -21,6 +21,7 @@
     "outDir": "./dist",
     "rootDir": "./",
     "baseUrl": "./",
+    "rootDirs": [".", "./.react-router/types"],
     "paths": {
       "@/*": ["src/*"],
       "@/components/*": ["src/*"],
@@ -38,7 +39,8 @@
     "src/**/*.js",
     "src/**/*.jsx",
     "*.ts",
-    "vite.config.ts"
+    "workers/**/*",
+    ".react-router/types/**/*"
   ],
   "exclude": ["node_modules", "dist", "build"]
 }

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { loadGoogleAnalytics, trackPageView } from '../utils/analytics';
 
 export const useGoogleAnalytics = (hasConsented: boolean) => {

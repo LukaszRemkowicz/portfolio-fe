@@ -1,6 +1,6 @@
 import { act } from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import '@testing-library/jest-dom';
 import Gallery from '../components/Gallery';
 import { useSettings } from '../hooks/useSettings';

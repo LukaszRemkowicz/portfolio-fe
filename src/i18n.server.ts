@@ -3,29 +3,14 @@
 // Server-safe i18n factory.
 // Creates a fresh i18next instance per request — no browser globals,
 // no LanguageDetector, no localStorage.
-// Used in entry-server.tsx (Phase 1+).
+// Used in entry.server.tsx and the root loader.
 
 import i18next from 'i18next';
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
 import { initReactI18next } from 'react-i18next';
 import { detectLanguage } from './shared/i18n/detectLanguage';
-
-const appRoot = process.cwd();
-
-function loadTranslation(language: 'en' | 'pl') {
-  const translationPath = path.join(
-    appRoot,
-    'public',
-    'locales',
-    language,
-    'translation.json'
-  );
-  return JSON.parse(readFileSync(translationPath, 'utf-8'));
-}
-
-const en = loadTranslation('en');
-const pl = loadTranslation('pl');
+// JSON modules (no node:fs) so this also runs on Cloudflare Workers.
+import en from '../public/locales/en/translation.json';
+import pl from '../public/locales/pl/translation.json';
 
 export async function createServerI18n(acceptLanguage = 'en') {
   const instance = i18next.createInstance();

@@ -1,0 +1,14 @@
+node_modules/
+dist/
+build/
+coverage/
+playwright-report/
+test-results/
+.react-router/
+.wrangler/
+.dev.vars*
+.env
+.env.*
+.DS_Store
+!.dev.vars.example
+dist-worker*/

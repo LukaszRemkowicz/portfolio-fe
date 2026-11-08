@@ -1,8 +1,13 @@
 import { test, expect } from './fixtures';
+import type { E2EWindow } from './fixtures';
 
 test.describe('Navigation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    // SSR HTML is interactive-looking before hydration; wait for the client.
+    await page.waitForFunction(
+      () => typeof (window as E2EWindow).openCookieSettings === 'function'
+    );
   });
 
   test('should navigate to main sections via navbar', async ({ page }) => {
@@ -29,7 +34,7 @@ test.describe('Navigation', () => {
     // Navigate Home
     await nav.getByRole('link', { name: 'Home', exact: true }).first().click();
     await page.waitForURL('**/', { timeout: 10000 });
-    await expect(page).toHaveURL('http://localhost:3000/');
+    await expect(page).toHaveURL('/');
   });
 
   test('should highlight active link', async ({ page }) => {
