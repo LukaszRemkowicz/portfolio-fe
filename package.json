@@ -1,6 +1,6 @@
 {
   "name": "portfolio",
-  "version": "2.17.4",
+  "version": "2.18.0",
   "description": "Portfolio landing page with astrophotography gallery, built with React, TypeScript, and Vite. Features TanStack Query, PWA support, advanced caching, and SEO optimization.",
   "private": true,
   "type": "module",
