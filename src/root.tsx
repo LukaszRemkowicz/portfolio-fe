@@ -219,13 +219,16 @@ export default function Root({ loaderData }: Route.ComponentProps) {
   );
   const [hasConsented, setHasConsented] = useState(() => hasAnalyticsConsent());
 
-  // On language change refetch server-translated data. Queries keyed by the new
-  // language fetch on their own; invalidating them too would fetch twice.
+  // On language change refetch server-translated data that is not keyed by
+  // language. Language-keyed queries fetch under their new key on their own;
+  // refetching the old-language ones would store new-language data under the
+  // old key (the API client reads the live i18n language).
   useEffect(() => {
-    const onLanguageChanged = (language: string) => {
+    const onLanguageChanged = () => {
       startTransition(() => {
         void queryClient.invalidateQueries({
-          predicate: query => !query.queryKey.includes(language),
+          predicate: query =>
+            !query.queryKey.some(part => part === 'en' || part === 'pl'),
         });
       });
       // LanguageSwitcher writes the i18next cookie before changeLanguage, so the

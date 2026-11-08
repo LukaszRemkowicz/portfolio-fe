@@ -7,6 +7,22 @@ test.describe('Landing Page', () => {
     await page.goto('/');
   });
 
+  test('language round trip keeps backend text in the right language', async ({
+    page,
+  }) => {
+    const toggle = page.getByRole('button', { name: 'Toggle language' });
+    const main = page.locator('main');
+    await expect(main).toContainText('Sky and landscape hunter');
+
+    await toggle.click();
+    await expect(main).toContainText('Łowca nieba i krajobrazów');
+
+    // Switching back must not show PL data cached under the EN key.
+    await toggle.click();
+    await expect(main).toContainText('Sky and landscape hunter');
+    await expect(main).not.toContainText('Łowca nieba i krajobrazów');
+  });
+
   test('should display the hero section with correct title', async ({
     page,
   }) => {
