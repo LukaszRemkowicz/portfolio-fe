@@ -1,6 +1,7 @@
 import { publicEnv, resolvePublicEnv } from '../../utils/publicEnv';
 import { logRequest } from '../logging';
 import { getRequestOrigin } from '../../utils/requestMeta';
+import { getOriginHeaders } from '../originHeaders';
 import { normalizeBffPayload } from './media';
 import { getFrontendTransportRoute } from './routes';
 import {
@@ -31,7 +32,7 @@ function getBackendBaseUrl(requestOrigin: string): string {
 
 /**
  * Headers for the internal Django request: public host, language, request id
- * and the resolved visitor IP (so backend throttling sees the visitor, not us).
+ * plus origin headers (visitor IP, Cloudflare Access token).
  */
 function getBackendHeaders(
   request: Request,
@@ -60,14 +61,7 @@ function getBackendHeaders(
     headers['X-Request-ID'] = requestId;
   }
 
-  const clientIp =
-    request.headers.get('cf-connecting-ip') ?? request.headers.get('x-real-ip');
-  if (clientIp) {
-    headers['X-Real-IP'] = clientIp;
-    headers['X-Forwarded-For'] = clientIp;
-  }
-
-  return headers;
+  return { ...headers, ...getOriginHeaders(request) };
 }
 
 async function readUpstreamPayload(response: Response): Promise<unknown> {

@@ -32,6 +32,22 @@ afterEach(() => {
 });
 
 describe('handleBffRequest', () => {
+  it('sends the Cloudflare Access service token to the origin when configured', async () => {
+    process.env.CF_ACCESS_CLIENT_ID = 'id.access';
+    process.env.CF_ACCESS_CLIENT_SECRET = 's3cret';
+    try {
+      upstream.mockResolvedValue(jsonUpstream({}));
+      await call('/app/settings/');
+      expect(upstream.mock.calls[0][1].headers).toMatchObject({
+        'CF-Access-Client-Id': 'id.access',
+        'CF-Access-Client-Secret': 's3cret',
+      });
+    } finally {
+      delete process.env.CF_ACCESS_CLIENT_ID;
+      delete process.env.CF_ACCESS_CLIENT_SECRET;
+    }
+  });
+
   it('returns 404 for unknown paths and invalid slugs', async () => {
     expect((await call('/app/nope')).status).toBe(404);
     expect((await call('/app/astroimages/bad%2Fslug')).status).toBe(404);

@@ -12,6 +12,44 @@ describe('HTML Utils', () => {
       );
     });
 
+    it('spaces block boundaries but not inline tags (same on server and client)', () => {
+      expect(
+        stripHtml(
+          '<p>at <strong>Castillo de Zafra</strong>, which</p><p>time. 🌠</p><p>The<br>end</p>'
+        )
+      ).toBe('at Castillo de Zafra, which time. 🌠 The end');
+    });
+
+    it('decodes common and numeric entities, keeps unknown ones', () => {
+      expect(
+        stripHtml(
+          '<p>A&nbsp;&amp;&nbsp;B &#39;x&#x27; &#x1F320; &lt;3 &foo;</p>'
+        )
+      ).toBe("A & B 'x' 🌠 <3 &foo;");
+    });
+
+    it('leaves no tag behind from nested or broken markup', () => {
+      const out = stripHtml(
+        '<<b>script>alert(1)<</b>/script><img src=x onerror=a'
+      );
+      expect(out).not.toContain('<');
+      expect(out).toBe('script>alert(1)/script>img src=x onerror=a');
+    });
+
+    it('does not depend on DOMParser (SSR parity)', () => {
+      const original = globalThis.DOMParser;
+      const html =
+        '<div><p>Hi <em>there</em></p><ul><li>a</li><li>b</li></ul></div>';
+      const withDom = stripHtml(html);
+      // @ts-expect-error - simulate the Workers runtime
+      delete globalThis.DOMParser;
+      try {
+        expect(stripHtml(html)).toBe(withDom);
+      } finally {
+        globalThis.DOMParser = original;
+      }
+    });
+
     it('returns empty string for null/undefined/empty input', () => {
       expect(stripHtml('')).toBe('');
       // @ts-expect-error - Testing runtime null handling

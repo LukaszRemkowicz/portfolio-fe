@@ -1,6 +1,7 @@
 import { createRequestHandler } from 'react-router';
 import { withRequestId } from '../src/server/withRequestId';
 import { isMalformedRequestTarget } from '../src/server/requestTarget';
+import { getMediaPassthroughUrl } from '../src/server/mediaPassthrough';
 
 declare module 'react-router' {
   export interface AppLoadContext {
@@ -44,6 +45,16 @@ export default {
       return new Response('Bad Request', {
         status: 400,
         headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      });
+    }
+    const mediaUrl =
+      request.method === 'GET' || request.method === 'HEAD'
+        ? getMediaPassthroughUrl(request.url, env.MEDIA_ORIGIN)
+        : null;
+    if (mediaUrl) {
+      return fetch(mediaUrl, {
+        method: request.method,
+        headers: { Accept: request.headers.get('accept') || '*/*' },
       });
     }
     let status = 500;

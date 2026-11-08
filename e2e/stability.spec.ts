@@ -1,4 +1,5 @@
 import { test, expect } from './fixtures';
+import type { E2EWindow } from './fixtures';
 
 test.describe('Stability Check', () => {
   test('should load the main page and NOT reload (checking for infinite loop)', async ({
@@ -15,17 +16,16 @@ test.describe('Stability Check', () => {
     // If the page reloads, this property will be lost (undefined).
     const markerValue = Date.now();
     await page.evaluate(val => {
-      (window as any).__stability_marker = val;
+      (window as E2EWindow).__stability_marker = val;
     }, markerValue);
 
     // 4. Wait for 5 seconds.
     // This is long enough for most refresh loops (which usually trigger immediately or within 1-2s) to happen.
-    // eslint-disable-next-line
     await page.waitForTimeout(5000);
 
     // 5. Check if the marker still exists and has the same value
     const retrievedValue = await page.evaluate(() => {
-      return (window as any).__stability_marker;
+      return (window as E2EWindow).__stability_marker;
     });
 
     // If retrievedValue is undefined or different, the page reloaded!

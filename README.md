@@ -22,6 +22,12 @@ React Router 7 (framework mode), Vite, `@cloudflare/vite-plugin` + Wrangler, Tan
 
 Copy `.dev.vars.example` to `.dev.vars` (gitignored) for local values. Main variables: `SITE_DOMAIN`, `API_URL` (public), `SSR_API_URL` (Worker to backend), `PROJECT_OWNER`, `GA_TRACKING_ID`, `ENABLE_GA`, `SENTRY_DSN_FE`, `ENVIRONMENT`. Deploy-time values come from Doppler; no routes are declared in `wrangler.jsonc`.
 
+### Backend access (Cloudflare Tunnel)
+
+The Worker reaches Django like the old in-network frontend did, through a Cloudflare Tunnel: the `cloudflared` service in the portfolio repo compose files forwards `https://<tunnel host>` to `http://be:8000`. The tunnel host is protected by Cloudflare Access; the Worker sends its service token on every backend call (BFF and SSR loaders) from the secrets `CF_ACCESS_CLIENT_ID` / `CF_ACCESS_CLIENT_SECRET`, together with the visitor IP (`X-Real-IP`) so Django throttles per visitor. Set `SSR_API_URL` to the tunnel host.
+
+`MEDIA_ORIGIN` (optional) is for test deploys without an origin route, e.g. `*.workers.dev`: the Worker then serves `/media/*` from that origin. Leave it unset in production, where Workers routes send `/media/*` to the VPS.
+
 ## Commands
 
 ```bash
@@ -44,7 +50,7 @@ Tip: `PLAYWRIGHT_CHANNEL=chrome npx playwright test` uses the installed Chrome. 
 
 ## Versioning and CI
 
-`VERSION` and `package.json` `version` must match (checked in CI). `.github/workflows/ci-cd.yml` runs lint/format/type-check, Jest with coverage, Playwright e2e, staging and production build + `wrangler deploy --dry-run`, Trivy and `audit-ci`.
+`VERSION` and `package.json` `version` must match (checked in CI). `.github/workflows/ci-cd.yml` runs lint/format/type-check, Jest with coverage, Playwright e2e, staging and production build + `wrangler deploy --dry-run`, Trivy and `audit-ci`. `.github/workflows/release.yml`: a new `VERSION` merged to `main` is tagged `v<VERSION>` and deployed to the `portfolio-fe-production` Worker (needs `CLOUDFLARE_API_TOKEN`, see `.github/SECRETS.md`).
 
 ## Public routes
 

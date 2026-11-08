@@ -1,5 +1,11 @@
 import { test as base } from '@playwright/test';
 
+/** Window globals the e2e specs read (set by the app or by the specs). */
+export type E2EWindow = Window & {
+  openCookieSettings?: () => void;
+  __stability_marker?: number;
+};
+
 // Pages are SSR'd by the real worker against the mock backend; there are no
 // browser-level API mocks. This auto fixture fails tests on React hydration errors.
 const HYDRATION =
@@ -16,7 +22,8 @@ export const test = base.extend<{ hydrationGuard: void }>({
         const res = await goto(url, options);
         await page
           .waitForFunction(
-            () => typeof (window as any).openCookieSettings === 'function',
+            () =>
+              typeof (window as E2EWindow).openCookieSettings === 'function',
             undefined,
             { timeout: 15000 }
           )

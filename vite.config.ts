@@ -54,22 +54,14 @@ export default defineConfig((): UserConfig => {
       allowedHosts: process.env.ALLOWED_HOSTS
         ? process.env.ALLOWED_HOSTS.split(',').map(h => h.trim())
         : ['portfolio.local', 'localhost'],
-      hmr: {
-        clientPort: process.env.VITE_ENVIRONMENT === 'stage' ? 8443 : 443,
-        protocol: 'wss',
-        host:
-          process.env.VITE_ENVIRONMENT === 'stage'
-            ? process.env.SITE_DOMAIN || 'stage.portfolio.local'
-            : 'portfolio.local',
-      },
     },
     preview: {
       host: '0.0.0.0',
       port: Number(process.env.FRONTEND_PORT) || 8080,
     },
     environments: {
-      // Client sourcemaps stay on; the worker bundle ships none.
-      client: { build: { sourcemap: true } },
+      // No public sourcemaps: nothing (e.g. Sentry) consumes them.
+      client: { build: { sourcemap: false } },
       ssr: { build: { sourcemap: false } },
     },
     build: {

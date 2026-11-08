@@ -32,6 +32,7 @@ import { RequestOriginContext } from './context/RequestOriginContext';
 import { useGoogleAnalytics } from './hooks/useGoogleAnalytics';
 import { hasAnalyticsConsent } from './utils/analytics';
 import { getRequestLanguage, getRequestOrigin } from './utils/requestMeta';
+import { getOriginHeaders } from './server/originHeaders';
 import {
   createLoaderQueryClient,
   prefetchQuerySafely,
@@ -74,7 +75,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const client = createApiClient(
     () => language,
     requestOrigin,
-    context.requestId
+    context.requestId,
+    getOriginHeaders(request)
   );
 
   const [i18n] = await Promise.all([
@@ -219,11 +221,17 @@ export default function Root({ loaderData }: Route.ComponentProps) {
   );
   const [hasConsented, setHasConsented] = useState(() => hasAnalyticsConsent());
 
-  // Invalidate all queries on language change so server-translated data is re-fetched
+  // On language change refetch server-translated data that is not keyed by
+  // language. Language-keyed queries fetch under their new key on their own;
+  // refetching the old-language ones would store new-language data under the
+  // old key (the API client reads the live i18n language).
   useEffect(() => {
     const onLanguageChanged = () => {
       startTransition(() => {
-        void queryClient.invalidateQueries();
+        void queryClient.invalidateQueries({
+          predicate: query =>
+            !query.queryKey.some(part => part === 'en' || part === 'pl'),
+        });
       });
       // LanguageSwitcher writes the i18next cookie before changeLanguage, so the
       // root loader now returns the new language, <html lang> and SEO meta.

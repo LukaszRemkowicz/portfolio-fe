@@ -51,7 +51,11 @@ function installStaleChunkRecovery(): void {
 }
 
 async function enablePwaRuntime(): Promise<void> {
+  // First install claims an already fresh page: reloading it would only wipe
+  // user input (e.g. a half-filled contact form). Reload on updates only.
+  const hadController = Boolean(navigator.serviceWorker.controller);
   navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController) return;
     triggerReloadOnce(SW_UPDATE_RELOAD_KEY);
   });
 

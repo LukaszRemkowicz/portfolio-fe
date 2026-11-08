@@ -1,5 +1,6 @@
 // frontend/e2e/cookie-consent.spec.ts
 import { test, expect } from './fixtures';
+import type { E2EWindow } from './fixtures';
 
 test.beforeEach(async ({ context }) => {
   // Clear context
@@ -14,7 +15,7 @@ test.describe('Cookie Consent & Privacy Policy', () => {
     // Wait for app to be ready: SSR HTML is visible before hydration, so wait
     // for the client-side cookie-settings hook to be installed.
     await page.waitForFunction(
-      () => typeof (window as any).openCookieSettings === 'function'
+      () => typeof (window as E2EWindow).openCookieSettings === 'function'
     );
     await page.waitForFunction(
       () => !document.querySelector('[class*="loadingScreen"]')
@@ -32,7 +33,7 @@ test.describe('Cookie Consent & Privacy Policy', () => {
     page,
   }) => {
     // Force banner open to ensure deterministic test
-    await page.evaluate(() => (window as any).openCookieSettings());
+    await page.evaluate(() => (window as E2EWindow).openCookieSettings?.());
 
     // Wait for banner
     const banner = page.getByRole('heading', { name: 'Cookie Consent' });
@@ -55,7 +56,7 @@ test.describe('Cookie Consent & Privacy Policy', () => {
     page,
   }) => {
     // Force banner open
-    await page.evaluate(() => (window as any).openCookieSettings());
+    await page.evaluate(() => (window as E2EWindow).openCookieSettings?.());
 
     await page.getByRole('button', { name: 'Decline' }).click();
 
@@ -113,7 +114,7 @@ test.describe('Cookie Consent & Privacy Policy', () => {
     page,
   }) => {
     // Force banner open initially so we can dismiss it
-    await page.evaluate(() => (window as any).openCookieSettings());
+    await page.evaluate(() => (window as E2EWindow).openCookieSettings?.());
 
     // Dismiss it first
     await page.getByRole('button', { name: 'Accept' }).click();
