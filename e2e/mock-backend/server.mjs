@@ -239,7 +239,10 @@ function validateContact(b) {
 
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://mock');
-  console.log(`${req.method} ${url.pathname}${url.search}`);
+  // Strip CR/LF so request data cannot forge extra log lines.
+  console.log(
+    `${req.method} ${url.pathname}${url.search}`.replace(/[\r\n]/g, '')
+  );
   const p = url.pathname.replace(/\/?$/, '/');
   const lang =
     url.searchParams.get('lang') ||
