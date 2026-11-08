@@ -10,3 +10,5 @@ Run: `MOCK_BACKEND_PORT=8765 MOCK_FLAGS_OFF=shop,programming node e2e/mock-backe
   `/image-urls/[<slug>/]`, `/image-files/<slug>/serve/` (PNG), `/media/*`.
 - Slugs: orion-nebula, andromeda-galaxy, milky-way-arch. Unknown -> 404 `{"detail":"Not found."}`.
 - Text is pl/en via `?lang=`, else `i18next` cookie, else Accept-Language. Every request is logged to stdout.
+- `POST /__mock/flags` `{"off":["shop","programming"]}` overrides the forced-off flags at runtime (`{"off":[]}` resets). Global state: specs using it must not run concurrently with others (see `flags.spec.ts`).
+- Gallery data: cards carry `thumbnail` variants (320w/560w), per-image tags; `/v1/astroimages/?tag=<slug>` and `?filter=<tag name>` filter the list.

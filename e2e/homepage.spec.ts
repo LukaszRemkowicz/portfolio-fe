@@ -4,85 +4,6 @@ const PROJECT_OWNER = process.env.PROJECT_OWNER || 'Portfolio Owner';
 
 test.describe('Landing Page', () => {
   test.beforeEach(async ({ page }) => {
-    // Override specific routes needed for Homepage tests
-
-    // 1. Mock specific image data for the homepage "Latest Images" section
-    await page.route('**/v1/astroimages/**', async route => {
-      // Logic from original test: return 2 specific images
-      // We only care about the list view here unless it's a detail request
-      const urlObj = new URL(route.request().url());
-      const isDetailView = urlObj.pathname.match(/\/astroimages\/([^/]+)\/?$/);
-
-      const images = [
-        {
-          pk: 1,
-          name: 'Test Galaxy',
-          slug: 'test-galaxy',
-          url: 'https://via.placeholder.com/800x600',
-          thumbnail_url: 'https://via.placeholder.com/200x150',
-          description: 'A test galaxy far away',
-          capture_date: '2023-01-01',
-          location: 'Backyard',
-          tags: ['Galaxy', 'Deep Sky'],
-        },
-        {
-          pk: 2,
-          name: 'Test Nebula',
-          slug: 'test-nebula',
-          url: 'https://via.placeholder.com/800x600',
-          thumbnail_url: 'https://via.placeholder.com/200x150',
-          description: 'A test nebula',
-          capture_date: '2023-01-02',
-          location: 'Mountain',
-          tags: ['Nebula'],
-        },
-      ];
-
-      if (isDetailView && isDetailView[1]) {
-        const idOrSlug = isDetailView[1];
-        const img = images.find(
-          i => i.pk.toString() === idOrSlug || i.slug === idOrSlug
-        );
-        if (img) {
-          return route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify(img),
-          });
-        }
-      }
-
-      return route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(images),
-      });
-    });
-
-    // 2. Mock Contact Form endpoint
-    await page.route('**/v1/contact/', async route => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true }),
-      });
-    });
-
-    // 3. Mock Feature Flags explicitly to ensure Contact Form is enabled
-    await page.route('**/v1/settings/', async route => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          contactForm: true,
-          programming: true,
-          gallery: true,
-          lastimages: true,
-          travelHighlights: true,
-        }),
-      });
-    });
-
     await page.goto('/');
   });
 
@@ -100,7 +21,7 @@ test.describe('Landing Page', () => {
     await expect(page.locator('h1').first()).toContainText('Gallery');
 
     await page.click(`nav a:has-text("${PROJECT_OWNER}")`);
-    await expect(page).toHaveURL('http://localhost:3000/');
+    await expect(page).toHaveURL('/');
   });
 
   test('should open image modal in gallery', async ({ page }) => {
@@ -112,7 +33,7 @@ test.describe('Landing Page', () => {
     await expect(heading).toBeVisible({ timeout: 20000 });
 
     // Target explicit data-testid for the first card
-    const firstImage = page.getByTestId('gallery-card-test-galaxy').first();
+    const firstImage = page.getByTestId('gallery-card-orion-nebula').first();
 
     await expect(firstImage).toBeVisible({ timeout: 10000 });
     // Force click since the image might be behind an overlay or animating
