@@ -6,7 +6,8 @@ import type { EntryContext } from 'react-router';
 import { createServerI18n } from './i18n.server';
 import { getRequestLanguage } from './utils/requestMeta';
 
-const RENDER_TIMEOUT_MS = 10000;
+// Max time to wait for Suspense boundaries (bots/SPA wait for allReady).
+export const streamTimeout = 5_000;
 
 export default async function handleRequest(
   request: Request,
@@ -17,7 +18,7 @@ export default async function handleRequest(
   const i18n = await createServerI18n(getRequestLanguage(request));
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), RENDER_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), streamTimeout + 1000);
   request.signal.addEventListener('abort', () => controller.abort());
 
   let shellRendered = false;
@@ -35,7 +36,10 @@ export default async function handleRequest(
     }
   );
   shellRendered = true;
-  clearTimeout(timeout);
+  body.allReady.then(
+    () => clearTimeout(timeout),
+    () => clearTimeout(timeout)
+  );
 
   const userAgent = request.headers.get('user-agent');
   if ((userAgent && isbot(userAgent)) || routerContext.isSpaMode) {

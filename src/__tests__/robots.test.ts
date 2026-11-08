@@ -24,11 +24,11 @@ describe('robots.txt route', () => {
     );
   });
 
-  it('falls back to the request host', async () => {
+  it('falls back to the request URL host, ignoring forwarded headers', async () => {
     delete process.env.SITE_DOMAIN;
-    const res = call({ 'x-forwarded-host': 'fwd.example' });
+    const res = call({ 'x-forwarded-host': 'evil.test' });
     expect(await res.text()).toContain(
-      'Sitemap: https://fwd.example/sitemap.xml'
+      'Sitemap: https://internal.example/sitemap.xml'
     );
   });
 });

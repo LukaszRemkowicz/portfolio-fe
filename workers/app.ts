@@ -1,4 +1,5 @@
 import { createRequestHandler } from 'react-router';
+import { withRequestId } from '../src/server/withRequestId';
 import { isMalformedRequestTarget } from '../src/server/requestTarget';
 
 declare module 'react-router' {
@@ -53,7 +54,7 @@ export default {
         cloudflare: { env, ctx },
       });
       status = response.status;
-      return response;
+      return withRequestId(response, requestId);
     } catch (e) {
       error = e;
       throw e;

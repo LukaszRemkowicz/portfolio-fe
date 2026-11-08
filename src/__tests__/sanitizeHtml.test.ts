@@ -153,3 +153,58 @@ describe('sanitizeHtml XSS vectors', () => {
     expect(sanitizeHtml('<a href="data:text/html,x">a</a>')).toBe('<a>a</a>');
   });
 });
+
+describe('sanitizeHtml post-step regressions', () => {
+  it('does not let an unpaired quote in text turn into attributes', () => {
+    const out = sanitizeHtml(
+      `<div>q style='X<img class="a;background:b" src=x>;' <span>" onerror=alert(1) </span></div>`
+    );
+    expect(out).toBe(
+      `<div>q style='X<img class="a;background:b" src="x">;' <span>" onerror=alert(1) </span></div>`
+    );
+  });
+
+  it('drops an empty style attribute', () => {
+    expect(sanitizeHtml('<p style="position:fixed">a</p>')).toBe('<p>a</p>');
+  });
+});
+
+describe('sanitizeHtml URL scheme check', () => {
+  it.each([
+    'java&Tab;script:alert(1)',
+    'java&NewLine;script:alert(1)',
+    '&#106;avascript:alert(1)',
+    'javascript&colon;alert(1)',
+    'JaVaScRiPt:alert(1)',
+    'vbscript:x',
+    'foo:bar',
+    'data:text/html,x',
+  ])('rejects href %s', url => {
+    expect(sanitizeHtml(`<a href="${url}">a</a>`)).toBe('<a>a</a>');
+  });
+
+  it.each([
+    '/a:b',
+    '?x=a:b',
+    '#a:b',
+    'foo/bar:baz',
+    'https://x',
+    'mailto:a@b',
+    'tel:1',
+  ])('keeps href %s', url => {
+    expect(sanitizeHtml(`<a href="${url}">a</a>`)).toBe(
+      `<a href="${url}">a</a>`
+    );
+  });
+
+  it('keeps data:image on img src and checks srcset candidates', () => {
+    const src = 'data:image/png;base64,AAAA';
+    expect(sanitizeHtml(`<img src="${src}">`)).toBe(`<img src="${src}">`);
+    expect(
+      sanitizeHtml('<img src="/x" srcset="java&Tab;script:alert(1) 1x">')
+    ).toBe('<img src="/x">');
+    expect(sanitizeHtml('<img src="/x" srcset="/a:b 1x, /c 2x">')).toBe(
+      '<img src="/x" srcset="/a:b 1x, /c 2x">'
+    );
+  });
+});

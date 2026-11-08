@@ -153,11 +153,11 @@ const SANITIZE_STRIP_BODY = new Set([
 ]);
 
 const SAFE_STYLE_PROPERTY =
-  /^(?:text-align|color|font-weight|font-style|font-size|font-family|line-height|text-decoration|vertical-align|width|height|min-width|max-width|aspect-ratio|float|list-style-type|(?:margin|padding|border)(?:-[a-z]+)*|background|background-color)$/;
+  /^(?:text-align|color|font-weight|font-style|font-size|font-family|line-height|text-decoration|vertical-align|width|height|min-width|max-width|aspect-ratio|float|list-style-type|(?:margin|padding|border)(?:-[a-z]+)*)$/;
 const UNSAFE_STYLE_VALUE =
   /url\s*\(|expression|javascript|vbscript|@import|behavior|binding|\\|[<>]/i;
 const SAFE_INLINE_IMAGE = /^data:image\/(?:png|gif|jpe?g|webp|avif)[;,]/;
-const URL_SCHEME = /^([a-z][a-z0-9+.-]*):/;
+const SCHEME_NAME = /^[a-z][a-z0-9+.-]*$/;
 const SAFE_SCHEMES = new Set(['http', 'https', 'mailto', 'tel']);
 
 /** Keep only whitelisted declarations, as written (DOMPurify parity). */
@@ -175,15 +175,19 @@ function filterStyle(value: string): string {
         !UNSAFE_STYLE_VALUE.test(declaration.slice(separator + 1))
       );
     })
-    .join(';');
+    .join('; ');
 }
 
 /** http(s)/mailto/tel, relative URLs, and data:image on <img src> only. */
 function isSafeUrl(tag: string, name: string, raw: string): boolean {
   // Decode entities/control chars like a browser would, then drop whitespace.
   const value = friendlyAttrValue(raw).replace(/\s+/g, '').toLowerCase();
-  const scheme = URL_SCHEME.exec(value)?.[1];
-  if (!scheme) return true;
+  // Named entities (&Tab;) are not decoded above, so anything before the first
+  // ':' that is not a plain known scheme is rejected, not treated as relative.
+  const end = value.search(/[:/?#]/);
+  if (end < 0 || value[end] !== ':') return true;
+  const scheme = value.slice(0, end);
+  if (!SCHEME_NAME.test(scheme)) return false;
   if (scheme === 'data') {
     return tag === 'img' && name === 'src' && SAFE_INLINE_IMAGE.test(value);
   }
@@ -251,27 +255,7 @@ export const sanitizeHtml = (html: string): string => {
   if (!html) return '';
 
   // Void elements: xss may emit ` />`; DOM serialization (previous impl) did not.
-  const sanitizedHtml = createHtmlFilter().process(html).replace(/ \/>/g, '>');
-
-  return sanitizedHtml.replace(
-    /\sstyle=(['"])(.*?)\1/gi,
-    (_match, quote: string, styleValue: string) => {
-      const preservedDeclarations = styleValue
-        .split(';')
-        .map(declaration => declaration.trim())
-        .filter(Boolean)
-        .filter(
-          declaration =>
-            !/^(background|background-color)\s*:/i.test(declaration)
-        );
-
-      if (preservedDeclarations.length === 0) {
-        return '';
-      }
-
-      return ` style=${quote}${preservedDeclarations.join('; ')}${quote}`;
-    }
-  );
+  return createHtmlFilter().process(html).replace(/ \/>/g, '>');
 };
 
 /**

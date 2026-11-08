@@ -8,10 +8,7 @@ const call = (path: string, init: RequestInit = {}) =>
   handleBffRequest(
     new Request(`${BASE}${path}`, {
       ...init,
-      headers: {
-        'x-forwarded-host': 'portfolio.local',
-        ...(init.headers as object),
-      },
+      headers: init.headers,
     }),
     'req-1'
   );
@@ -89,6 +86,26 @@ describe('handleBffRequest', () => {
     );
     expect(await response.json()).toEqual({
       results: [{ url: '/media/a.webp' }],
+    });
+  });
+
+  it('ignores spoofed forwarded/Host headers for the backend Host', async () => {
+    upstream.mockResolvedValue(jsonUpstream({}));
+    process.env.SITE_DOMAIN = 'real.example';
+    try {
+      await call('/app/settings/', {
+        headers: {
+          'x-forwarded-host': 'evil.test',
+          'x-forwarded-proto': 'http',
+        },
+      });
+    } finally {
+      delete process.env.SITE_DOMAIN;
+    }
+    expect(upstream.mock.calls[0][1].headers).toMatchObject({
+      Host: 'real.example',
+      'X-Forwarded-Host': 'real.example',
+      'X-Forwarded-Proto': 'https',
     });
   });
 

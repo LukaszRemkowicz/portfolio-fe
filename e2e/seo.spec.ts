@@ -1,9 +1,10 @@
 import { test, expect } from '@playwright/test';
 
 // No JS execution: raw SSR HTML via APIRequestContext.
+// Spoofed forwarded headers must be ignored: origin comes from SITE_DOMAIN.
 const HEADERS = {
-  'X-Forwarded-Host': 'portfolio.local',
-  'X-Forwarded-Proto': 'https',
+  'X-Forwarded-Host': 'evil.test',
+  'X-Forwarded-Proto': 'http',
 };
 const HOST = 'https://portfolio.local';
 

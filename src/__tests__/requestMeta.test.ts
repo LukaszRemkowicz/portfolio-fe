@@ -8,23 +8,37 @@ const req = (headers: Record<string, string>, url = 'http://localhost/') =>
   }) as unknown as Request;
 
 describe('getRequestOrigin', () => {
-  it('prefers the first forwarded proto/host values', () => {
-    expect(
-      getRequestOrigin(
-        req({
-          'x-forwarded-proto': 'https, http',
-          'x-forwarded-host': 'portfolio.local, internal',
-        })
-      )
-    ).toBe('https://portfolio.local');
+  const original = process.env.SITE_DOMAIN;
+  afterEach(() => {
+    if (original === undefined) delete process.env.SITE_DOMAIN;
+    else process.env.SITE_DOMAIN = original;
   });
 
-  it('falls back to the Host header, then the request URL', () => {
-    expect(getRequestOrigin(req({ host: 'a.test' }, 'http://b.test/'))).toBe(
-      'http://a.test'
+  it('uses https://SITE_DOMAIN when set (read per call)', () => {
+    process.env.SITE_DOMAIN = 'site.example';
+    expect(getRequestOrigin(req({}, 'http://b.test/x'))).toBe(
+      'https://site.example'
     );
+  });
+
+  it('falls back to the request URL origin without SITE_DOMAIN', () => {
+    delete process.env.SITE_DOMAIN;
     expect(getRequestOrigin(req({}, 'https://b.test:8443/x'))).toBe(
       'https://b.test:8443'
+    );
+  });
+
+  it('ignores spoofed X-Forwarded-* and Host headers', () => {
+    const spoof = {
+      'x-forwarded-host': 'evil.test',
+      'x-forwarded-proto': 'http',
+      host: 'evil.test',
+    };
+    process.env.SITE_DOMAIN = 'site.example';
+    expect(getRequestOrigin(req(spoof))).toBe('https://site.example');
+    delete process.env.SITE_DOMAIN;
+    expect(getRequestOrigin(req(spoof, 'https://b.test/'))).toBe(
+      'https://b.test'
     );
   });
 });
