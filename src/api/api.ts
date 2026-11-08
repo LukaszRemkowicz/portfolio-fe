@@ -186,12 +186,13 @@ function attachErrorInterceptor(client: AxiosInstance) {
  *
  * On the server this also forwards the public site host and request ID to the
  * backend so generated URLs and request tracing stay aligned with the incoming
- * request.
+ * request, plus `originHeaders` (visitor IP, Cloudflare Access token).
  */
 export function createApiClient(
   getLanguage: () => string,
   requestOrigin?: string,
-  requestId?: string
+  requestId?: string,
+  originHeaders: Record<string, string> = {}
 ): AxiosInstance {
   const defaultHeaders: Record<string, string> = {};
 
@@ -210,6 +211,7 @@ export function createApiClient(
       if (requestId) {
         defaultHeaders['X-Request-ID'] = requestId;
       }
+      Object.assign(defaultHeaders, originHeaders);
     } catch {
       // Ignore malformed public API URLs and fall back to transport defaults.
     }

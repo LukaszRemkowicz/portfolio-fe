@@ -21,7 +21,9 @@
   // defaults (e.g. SSR_API_URL=127.0.0.1, SITE_DOMAIN=portfolio.local) never
   // leak into staging/production. The remaining vars (SITE_DOMAIN, API_URL,
   // SSR_API_URL, GA_TRACKING_ID, ENABLE_GA, SENTRY_DSN_FE, PROJECT_OWNER) are
-  // supplied at deploy time from Doppler. No routes/domains are declared here.
+  // supplied at deploy time from Doppler. Secrets CF_ACCESS_CLIENT_ID and
+  // CF_ACCESS_CLIENT_SECRET (Access token for the backend tunnel) are set with
+  // `wrangler secret put`. No routes/domains are declared here.
   "env": {
     "staging": {
       "workers_dev": false,

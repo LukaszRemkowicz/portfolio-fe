@@ -32,6 +32,7 @@ import { RequestOriginContext } from './context/RequestOriginContext';
 import { useGoogleAnalytics } from './hooks/useGoogleAnalytics';
 import { hasAnalyticsConsent } from './utils/analytics';
 import { getRequestLanguage, getRequestOrigin } from './utils/requestMeta';
+import { getOriginHeaders } from './server/originHeaders';
 import {
   createLoaderQueryClient,
   prefetchQuerySafely,
@@ -74,7 +75,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const client = createApiClient(
     () => language,
     requestOrigin,
-    context.requestId
+    context.requestId,
+    getOriginHeaders(request)
   );
 
   const [i18n] = await Promise.all([

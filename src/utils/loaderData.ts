@@ -2,6 +2,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api/api';
 import { createServerI18n } from '../i18n.server';
 import { logWarning, toErrorPayload } from '../server/logging';
+import { getOriginHeaders } from '../server/originHeaders';
 import { getRequestLanguage, getRequestOrigin } from './requestMeta';
 
 /** Request-scoped QueryClient for route loaders (discarded after dehydration). */
@@ -30,7 +31,12 @@ export async function createLoaderRequestContext(
     language,
     requestOrigin,
     t: i18n.t.bind(i18n),
-    client: createApiClient(() => language, requestOrigin, requestId),
+    client: createApiClient(
+      () => language,
+      requestOrigin,
+      requestId,
+      getOriginHeaders(request)
+    ),
   };
 }
 

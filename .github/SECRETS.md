@@ -14,7 +14,7 @@ No deploy workflow exists yet; added in a separate cutover task.
 - Per-environment vars from Doppler (`wrangler.jsonc` `env.*.vars` only sets `ENVIRONMENT`):
   `ENVIRONMENT`, `SITE_DOMAIN`, `API_URL`, `SSR_API_URL`, `GA_TRACKING_ID`, `ENABLE_GA`,
   `SENTRY_DSN_FE`, `PROJECT_OWNER`.
-- Cloudflare Access service-token credentials (client id + secret) for Worker -> origin calls.
+- `CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET` - Cloudflare Access service token for Worker -> backend tunnel calls (Worker secrets, `wrangler secret put`).
 
 ## Branch model
 `feat/* -> dev -> main`; `hotfix/*` and `release/*` may target `main`. Bump `VERSION` and
