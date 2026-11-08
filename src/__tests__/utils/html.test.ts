@@ -28,6 +28,14 @@ describe('HTML Utils', () => {
       ).toBe("A & B 'x' 🌠 <3 &foo;");
     });
 
+    it('leaves no tag behind from nested or broken markup', () => {
+      const out = stripHtml(
+        '<<b>script>alert(1)<</b>/script><img src=x onerror=a'
+      );
+      expect(out).not.toContain('<');
+      expect(out).toBe('script>alert(1)/script>img src=x onerror=a');
+    });
+
     it('does not depend on DOMParser (SSR parity)', () => {
       const original = globalThis.DOMParser;
       const html =
