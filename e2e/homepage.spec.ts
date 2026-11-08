@@ -52,11 +52,12 @@ test.describe('Landing Page', () => {
     const firstImage = page.getByTestId('gallery-card-orion-nebula').first();
 
     await expect(firstImage).toBeVisible({ timeout: 10000 });
-    // Force click since the image might be behind an overlay or animating
-    await firstImage.click({ force: true });
-
     const modal = page.getByTestId('image-modal');
-    await expect(modal).toBeVisible({ timeout: 10000 });
+    // The lazy Gallery may still be hydrating (no click handler yet): retry.
+    await expect(async () => {
+      await firstImage.click({ force: true });
+      await expect(modal).toBeVisible({ timeout: 1000 });
+    }).toPass({ timeout: 10000 });
 
     await page.keyboard.press('Escape');
     await expect(modal).not.toBeVisible();

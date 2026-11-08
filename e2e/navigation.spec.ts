@@ -1,11 +1,12 @@
 import { test, expect } from './fixtures';
+import type { E2EWindow } from './fixtures';
 
 test.describe('Navigation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     // SSR HTML is interactive-looking before hydration; wait for the client.
     await page.waitForFunction(
-      () => typeof (window as any).openCookieSettings === 'function'
+      () => typeof (window as E2EWindow).openCookieSettings === 'function'
     );
   });
 
