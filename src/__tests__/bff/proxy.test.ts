@@ -86,7 +86,6 @@ describe('handleBffRequest', () => {
     expect(init.headers).toMatchObject({
       Accept: 'application/json',
       'Accept-Language': 'pl',
-      Host: 'portfolio.local',
       'X-Forwarded-Host': 'portfolio.local',
       'X-Forwarded-Proto': 'https',
       'X-Request-ID': 'req-1',
@@ -119,10 +118,12 @@ describe('handleBffRequest', () => {
       delete process.env.SITE_DOMAIN;
     }
     expect(upstream.mock.calls[0][1].headers).toMatchObject({
-      Host: 'real.example',
       'X-Forwarded-Host': 'real.example',
       'X-Forwarded-Proto': 'https',
     });
+    // A Host override would be honored for same-zone fetches and misroute
+    // the tunnel request; Django reads X-Forwarded-Host instead.
+    expect(upstream.mock.calls[0][1].headers).not.toHaveProperty('Host');
   });
 
   it('passes upstream status and falls back to text for non-JSON', async () => {

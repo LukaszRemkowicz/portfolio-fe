@@ -7,7 +7,7 @@
  * - language query propagation
  * - SSR request logging
  * - backend error normalization
- * - SSR forwarding headers such as Host and X-Request-ID
+ * - SSR forwarding headers such as X-Forwarded-Host and X-Request-ID
  *
  * Higher-level route ownership lives in `services.ts` and `bff.ts`.
  */
@@ -202,7 +202,6 @@ export function createApiClient(
         ? new URL(requestOrigin)
         : new URL(`https://${publicEnv.SITE_DOMAIN}`);
 
-      defaultHeaders.Host = publicSiteUrl.host;
       defaultHeaders['X-Forwarded-Host'] = publicSiteUrl.host;
       defaultHeaders['X-Forwarded-Proto'] = publicSiteUrl.protocol.replace(
         ':',
