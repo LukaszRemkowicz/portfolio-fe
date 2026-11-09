@@ -31,7 +31,8 @@ function getBackendBaseUrl(requestOrigin: string): string {
 }
 
 /**
- * Headers for the internal Django request: public host, language, request id
+ * Headers for the internal Django request: public host (X-Forwarded-Host, no
+ * Host override), language, request id
  * plus origin headers (visitor IP, Cloudflare Access token).
  */
 function getBackendHeaders(
@@ -53,7 +54,6 @@ function getBackendHeaders(
   }
 
   const publicSiteUrl = new URL(requestOrigin);
-  headers.Host = publicSiteUrl.host;
   headers['X-Forwarded-Host'] = publicSiteUrl.host;
   headers['X-Forwarded-Proto'] = publicSiteUrl.protocol.replace(':', '');
 
