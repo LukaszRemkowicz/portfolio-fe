@@ -9,7 +9,7 @@ Shared workflows in `LukaszRemkowicz/ci-cd` need no other secrets. PR CI uses no
 `wrangler deploy --dry-run` runs offline.
 
 ## Production deploy (`release.yml`)
-Merging a new `VERSION` to `main` tags `v<VERSION>` and deploys the `portfolio-fe-production` Worker.
+Merging a new `package.json` version to `main` tags `v<version>` and deploys the `portfolio-fe-production` Worker.
 - `CLOUDFLARE_API_TOKEN` (secret) - API token with Account > Workers Scripts > Edit.
 - `CLOUDFLARE_ACCOUNT_ID` (repo variable) - Cloudflare account id.
 - `PROJECT_OWNER` (repo variable) - build-time only (PWA manifest name).
@@ -20,5 +20,5 @@ Runtime config lives in Cloudflare on each Worker, not in GitHub: set once as Wo
 (source values: Doppler `portfolio/prd`). `ENVIRONMENT` comes from `wrangler.jsonc`.
 
 ## Branch model
-`feat/* -> dev -> main`; `hotfix/*` and `release/*` may target `main`. Bump `VERSION` and
-`package.json` together (CI enforces equality); merging to `main` tags `v<VERSION>` and deploys production.
+`feat/* -> dev -> main`; `hotfix/*` and `release/*` may target `main`. Bump the `version` in
+`package.json`; merging to `main` tags `v<version>` and deploys production.
