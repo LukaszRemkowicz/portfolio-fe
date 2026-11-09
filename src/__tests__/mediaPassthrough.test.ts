@@ -1,6 +1,6 @@
 import { getMediaPassthroughUrl } from '../server/mediaPassthrough';
 
-const ORIGIN = 'https://lukaszremkowicz.com';
+const ORIGIN = 'https://media.example.com';
 
 describe('getMediaPassthroughUrl', () => {
   it('is off without MEDIA_ORIGIN', () => {
