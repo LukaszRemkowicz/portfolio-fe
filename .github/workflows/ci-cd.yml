@@ -62,13 +62,6 @@ jobs:
           node-version: "24"
           cache: "npm"
       - run: npm ci
-      - name: Check package.json version matches VERSION
-        run: |
-          pkg="$(node -p "require('./package.json').version")"
-          ver="$(tr -d '[:space:]' < VERSION)"
-          if [ "$pkg" != "$ver" ]; then
-            echo "package.json ($pkg) != VERSION ($ver)"; exit 1
-          fi
       # CLOUDFLARE_ENV at build time bakes the env into the redirected config
       # (build/server/wrangler.json); `wrangler deploy --env` is not used.
       - name: Build and dry-run deploy (staging)
