@@ -26,7 +26,7 @@ Copy `.dev.vars.example` to `.dev.vars` (gitignored) for local values. Main vari
 
 The Worker reaches Django like the old in-network frontend did, through a Cloudflare Tunnel: the `cloudflared` service in the portfolio repo compose files forwards `https://<tunnel host>` to `http://be:8000`. The tunnel host is protected by Cloudflare Access; the Worker sends its service token on every backend call (BFF and SSR loaders) from the secrets `CF_ACCESS_CLIENT_ID` / `CF_ACCESS_CLIENT_SECRET`, together with the visitor IP (`X-Real-IP`) so Django throttles per visitor. Set `SSR_API_URL` to the tunnel host.
 
-`MEDIA_ORIGIN` (optional) is for test deploys without an origin route, e.g. `*.workers.dev`: the Worker then serves `/media/*` from that origin. Leave it unset in production, where Workers routes send `/media/*` to the VPS.
+`MEDIA_ORIGIN` (optional) is for test deploys without an origin route, e.g. `*.workers.dev`: the Worker then serves `/media/*` and full-size images (`/app/image-files/*`, served by nginx via X-Accel) from that origin. Leave it unset in production, where Workers routes send both to the VPS.
 
 ## Commands
 

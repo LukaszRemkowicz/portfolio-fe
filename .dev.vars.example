@@ -15,5 +15,5 @@ SSR_API_URL=http://127.0.0.1:8765
 # CF_ACCESS_CLIENT_ID=
 # CF_ACCESS_CLIENT_SECRET=
 # Optional, test deploys without an origin route only (e.g. *.workers.dev):
-# serve /media/* from this origin.
+# serve /media/* and /app/image-files/* from this origin.
 # MEDIA_ORIGIN=
