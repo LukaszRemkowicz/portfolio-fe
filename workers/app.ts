@@ -2,6 +2,7 @@ import { createRequestHandler } from 'react-router';
 import { withRequestId } from '../src/server/withRequestId';
 import { isMalformedRequestTarget } from '../src/server/requestTarget';
 import { getMediaPassthroughUrl } from '../src/server/mediaPassthrough';
+import { exposeEnvToProcess } from '../src/server/exposeEnvToProcess';
 
 declare module 'react-router' {
   export interface AppLoadContext {
@@ -24,6 +25,8 @@ export default {
     env: Record<string, string>,
     ctx: { waitUntil(promise: Promise<unknown>): void }
   ): Promise<Response> {
+    // Before the app (server build) loads: it reads its config from process.env.
+    exposeEnvToProcess(env);
     const start = Date.now();
     const requestId =
       request.headers.get('x-request-id')?.split(',')[0]?.trim() ||
