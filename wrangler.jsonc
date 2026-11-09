@@ -3,7 +3,10 @@
   "name": "portfolio-fe",
   "main": "./workers/app.ts",
   "compatibility_date": "2025-09-01",
-  "compatibility_flags": ["nodejs_compat"],
+  // global_fetch_strictly_public: fetches to our own zone (the backend tunnel at
+  // internal-api.<domain>) go through Cloudflare like Internet traffic. Without
+  // it, same-zone subrequests skip the tunnel/Access path and fail with 530.
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "observability": { "enabled": true },
   // Non-secret public runtime config. Local-dev defaults; override per
   // environment (see .dev.vars.example). Exposed to code via process.env.
