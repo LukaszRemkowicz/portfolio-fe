@@ -103,7 +103,9 @@ export const postBffJson = async <TResponse>(
   urlWithLang.searchParams.set('lang', lang);
 
   const controller = new AbortController();
-  const timeoutMs = options.timeoutMs ?? 1500;
+  // Only the contact form posts; the backend can take ~2-3 s (it queues the
+  // notification email), so 1.5 s aborted requests that actually succeeded.
+  const timeoutMs = options.timeoutMs ?? 10_000;
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
