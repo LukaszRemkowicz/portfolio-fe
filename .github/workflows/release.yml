@@ -15,7 +15,7 @@ jobs:
   tag-main:
     uses: LukaszRemkowicz/ci-cd/.github/workflows/release-tag.yml@main
     with:
-      version_file: VERSION
+      version_file: package.json
       tag_prefix: v
 
   # Same flow as cosmic-journey: a new version on main is tagged, then deployed.
