@@ -17,6 +17,7 @@ import { useAstroImageDetail } from '../../hooks/useAstroImageDetail';
 import { useImageUrls } from '../../hooks/useImageUrls';
 import { sanitizeHtml, isHtmlEmpty, slugify } from '../../utils/html';
 import { APP_ROUTES } from '../../api/constants';
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import ImageWithFallback from './ImageWithFallback';
 
 interface ImageModalProps {
@@ -68,22 +69,7 @@ const ImageModalContent: FC<ImageModalProps> = ({ image, onClose }) => {
       value: false,
     })
   );
-  const [scale, setScale] = useState(1);
-  const [panPosition, setPanPosition] = useState({ x: 0, y: 0 }); // Pixels
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStartTime, setDragStartTime] = useState(0);
-  const [hasMoved, setHasMoved] = useState(false);
-  const [lastTouchDistance, setLastTouchDistance] = useState<number | null>(
-    null
-  );
-  const [imageDimensions, setImageDimensions] = useState<{
-    width: number;
-    height: number;
-  } | null>(null);
-
-  // Use refs to avoid re-renders during drag
-  const dragStartRef = useRef({ x: 0, y: 0 });
-  const rafRef = useRef<number | null>(null);
+  const suppressClickUntilRef = useRef(0);
   const resolvedImageSrc =
     resolvedImageState.key === imageSourceKey
       ? resolvedImageState.src
@@ -93,12 +79,11 @@ const ImageModalContent: FC<ImageModalProps> = ({ image, onClose }) => {
       ? fullImageLoadFailedState.value
       : false;
 
-  const closeFullRes = () => {
-    setIsFullRes(false);
-    setScale(1);
-    setPanPosition({ x: 0, y: 0 });
-    setLastTouchDistance(null);
-    setImageDimensions(null);
+  const closeFullRes = () => setIsFullRes(false);
+
+  // A pan/pinch/zoom gesture ends with a synthetic click; ignore it for a moment.
+  const suppressNextClick = () => {
+    suppressClickUntilRef.current = Date.now() + 300;
   };
 
   useEffect(() => {
@@ -140,170 +125,30 @@ const ImageModalContent: FC<ImageModalProps> = ({ image, onClose }) => {
     };
   }, [imageSourceKey, preferredImageSrc, resolvedImageSrc]);
 
-  // Clamp pan position to prevent panning beyond image boundaries
-  const clampPanPosition = useCallback(
-    (position: { x: number; y: number }, currentScale: number) => {
-      if (!imageDimensions || currentScale <= 1) {
-        return { x: 0, y: 0 };
-      }
-
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-
-      // Calculate the scaled image dimensions
-      const scaledWidth = imageDimensions.width * currentScale;
-      const scaledHeight = imageDimensions.height * currentScale;
-
-      // Calculate maximum pan offsets (how far we can pan before hitting edges)
-      const maxPanX = Math.max(0, (scaledWidth - viewportWidth) / 2);
-      const maxPanY = Math.max(0, (scaledHeight - viewportHeight) / 2);
-
-      return {
-        x: Math.max(-maxPanX, Math.min(maxPanX, position.x)),
-        y: Math.max(-maxPanY, Math.min(maxPanY, position.y)),
-      };
-    },
-    [imageDimensions]
-  );
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (!image || scale <= 1 || image.process === false) return;
-    e.preventDefault();
-    e.stopPropagation(); // Stop from hitting overlay
-    setIsDragging(true);
-    setHasMoved(false);
-    setDragStartTime(Date.now());
-    dragStartRef.current = { x: e.clientX, y: e.clientY };
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || scale <= 1) return;
-
-    const dx = Math.abs(e.clientX - dragStartRef.current.x);
-    const dy = Math.abs(e.clientY - dragStartRef.current.y);
-
-    if (dx > 5 || dy > 5) {
-      setHasMoved(true);
-    }
-
-    const moveX = e.clientX - dragStartRef.current.x;
-    const moveY = e.clientY - dragStartRef.current.y;
-
-    // Use requestAnimationFrame for smooth updates
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current);
-    }
-
-    rafRef.current = requestAnimationFrame(() => {
-      setPanPosition(prev => {
-        const newPosition = {
-          x: prev.x + moveX,
-          y: prev.y + moveY,
-        };
-        return clampPanPosition(newPosition, scale);
-      });
+  // Lock page scroll/rubber-banding behind the modal; restore on close.
+  useEffect(() => {
+    if (!image) return;
+    const targets = [document.documentElement, document.body];
+    const prev = targets.map(el => [
+      el.style.overflow,
+      el.style.overscrollBehavior,
+    ]);
+    targets.forEach(el => {
+      el.style.overflow = 'hidden';
+      el.style.overscrollBehavior = 'none';
     });
-
-    dragStartRef.current = { x: e.clientX, y: e.clientY };
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    if (!image || !isFullRes || image.process === false) return;
-
-    // Always prevent default to stop the background from scrolling while in lightbox
-    e.preventDefault();
-
-    // Normalize deltaY for cross-browser compatibility (especially Firefox)
-    let normalizedDelta = e.deltaY;
-
-    // Firefox uses different deltaMode values
-    if (e.deltaMode === 1) {
-      // DOM_DELTA_LINE
-      normalizedDelta *= 16; // Typical line height in pixels
-    } else if (e.deltaMode === 2) {
-      // DOM_DELTA_PAGE
-      normalizedDelta *= window.innerHeight;
-    }
-    // deltaMode === 0 is DOM_DELTA_PIXEL, use as-is
-
-    // Standard scroll or Trackpad Pinch (ctrlKey)
-    const factor = e.ctrlKey ? 0.01 : 0.001;
-    const delta = -normalizedDelta * factor;
-    setScale(prev => Math.min(Math.max(1, prev + delta), 4));
-  };
-
-  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!image || image.process === false) return;
-    if (e.touches.length === 2) {
-      const distance = Math.hypot(
-        e.touches[0].pageX - e.touches[1].pageX,
-        e.touches[0].pageY - e.touches[1].pageY
-      );
-      setLastTouchDistance(distance);
-    }
-  };
-
-  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!image || image.process === false) return;
-
-    // Prevent default scroll behavior
-    e.preventDefault();
-
-    if (e.touches.length === 2 && lastTouchDistance !== null) {
-      const distance = Math.hypot(
-        e.touches[0].pageX - e.touches[1].pageX,
-        e.touches[0].pageY - e.touches[1].pageY
-      );
-      const delta = (distance - lastTouchDistance) * 0.01;
-      setScale(prev => Math.min(Math.max(1, prev + delta), 4));
-      setLastTouchDistance(distance);
-    } else if (e.touches.length === 1 && scale > 1) {
-      const touch = e.touches[0];
-      const dx = touch.clientX - dragStartRef.current.x;
-      const dy = touch.clientY - dragStartRef.current.y;
-
-      setPanPosition(prev => {
-        const newPosition = {
-          x: prev.x + dx,
-          y: prev.y + dy,
-        };
-        return clampPanPosition(newPosition, scale);
+    return () =>
+      targets.forEach((el, i) => {
+        [el.style.overflow, el.style.overscrollBehavior] = prev[i];
       });
-
-      dragStartRef.current = { x: touch.clientX, y: touch.clientY };
-    }
-  };
-
-  const toggleZoom = (e: React.MouseEvent) => {
-    if (!image || image.process === false) return;
-    e.stopPropagation();
-    const duration = Date.now() - dragStartTime;
-    if (hasMoved || duration > 200) return; // Ignore if moved or held for long
-
-    if (scale > 1) {
-      setScale(1.0);
-      setPanPosition({ x: 0, y: 0 });
-    } else {
-      setScale(2.0);
-      setPanPosition({ x: 0, y: 0 });
-    }
-  };
+  }, [image]);
 
   useEffect(() => {
     if (!image) return;
     const handleKeyDown = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
         if (isFullRes) {
-          if (scale > 1) {
-            setScale(1);
-            setPanPosition({ x: 0, y: 0 });
-          } else {
-            closeFullRes();
-          }
+          closeFullRes();
         } else {
           onClose();
         }
@@ -311,7 +156,7 @@ const ImageModalContent: FC<ImageModalProps> = ({ image, onClose }) => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [image, onClose, isFullRes, scale]);
+  }, [image, onClose, isFullRes]);
 
   const handleTagClick = useCallback(
     (tag: string) => {
@@ -476,7 +321,6 @@ const ImageModalContent: FC<ImageModalProps> = ({ image, onClose }) => {
             onClick={() => {
               if (image.process !== false) {
                 setIsFullRes(true);
-                setPanPosition({ x: 0, y: 0 });
               }
             }}
             style={{ cursor: image.process !== false ? 'zoom-in' : 'default' }}
@@ -499,31 +343,14 @@ const ImageModalContent: FC<ImageModalProps> = ({ image, onClose }) => {
           createPortal(
             <div
               className={styles.fullResOverlay}
-              onMouseDown={() => {
-                setHasMoved(false);
-                setDragStartTime(Date.now());
-              }}
-              onClick={() => {
-                const duration = Date.now() - dragStartTime;
-                if (!hasMoved && duration < 200) closeFullRes();
-              }}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
-              onWheel={handleWheel}
-              onTouchStart={e => {
-                if (e.touches.length === 1) {
-                  dragStartRef.current = {
-                    x: e.touches[0].clientX,
-                    y: e.touches[0].clientY,
-                  };
+              onClick={e => {
+                if (
+                  (e.target as HTMLElement).tagName === 'IMG' ||
+                  Date.now() < suppressClickUntilRef.current
+                ) {
+                  return;
                 }
-                handleTouchStart(e);
-              }}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={() => {
-                setIsDragging(false);
-                setLastTouchDistance(null);
+                closeFullRes();
               }}
             >
               <button
@@ -535,37 +362,37 @@ const ImageModalContent: FC<ImageModalProps> = ({ image, onClose }) => {
               >
                 <X size={32} />
               </button>
-              <ImageWithFallback
-                src={resolvedImageSrc}
-                fallbackOnEmptySrc={false}
-                alt={image.name}
-                className={`${styles.fullResImage} ${
-                  scale > 1.01 ? styles.isZoomed : ''
-                }`}
-                onMouseDown={handleMouseDown}
-                onClick={toggleZoom}
-                onLoad={e => {
-                  const img = e.currentTarget;
-                  setImageDimensions({
-                    width: img.naturalWidth,
-                    height: img.naturalHeight,
-                  });
-                }}
-                style={{
-                  transform: `translate(${panPosition.x}px, ${panPosition.y}px) scale(${scale})`,
-                  transition: 'none',
-                  cursor:
-                    image.process === false
-                      ? 'default'
-                      : scale > 1.01
-                        ? isDragging
-                          ? 'grabbing'
-                          : 'grab'
-                        : 'zoom-in',
-                }}
-                draggable='false'
-                onContextMenu={e => e.preventDefault()}
-              />
+              <TransformWrapper
+                minScale={1}
+                maxScale={4}
+                initialScale={1}
+                centerOnInit
+                limitToBounds
+                doubleClick={{ mode: 'toggle', step: 1.5 }}
+                wheel={{ step: 0.2 }}
+                pinch={{ disabled: false }}
+                panning={{ disabled: false, velocityDisabled: true }}
+                velocityAnimation={{ disabled: true }}
+                onPanningStart={suppressNextClick}
+                onPanningStop={suppressNextClick}
+                onPinchStart={suppressNextClick}
+                onPinchStop={suppressNextClick}
+                onZoomStop={suppressNextClick}
+              >
+                <TransformComponent
+                  wrapperClass={styles.fullResWrapper}
+                  contentClass={styles.fullResContent}
+                >
+                  <ImageWithFallback
+                    src={resolvedImageSrc}
+                    fallbackOnEmptySrc={false}
+                    alt={image.name}
+                    className={styles.fullResImage}
+                    draggable='false'
+                    onContextMenu={e => e.preventDefault()}
+                  />
+                </TransformComponent>
+              </TransformWrapper>
             </div>,
             document.body
           )}

@@ -17,6 +17,10 @@ const ImageWithFallback = ({
 }: ImageWithFallbackProps) => {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
+  const onLoadRef = useRef(onLoad);
+  useEffect(() => {
+    onLoadRef.current = onLoad;
+  });
   const resolvedSrc =
     failedSrc === src
       ? fallbackSrc
@@ -27,7 +31,7 @@ const ImageWithFallback = ({
     if (!img || !img.complete) return;
 
     if (img.naturalWidth > 0) {
-      onLoad?.({
+      onLoadRef.current?.({
         currentTarget: img,
         target: img,
       } as unknown as React.SyntheticEvent<HTMLImageElement, Event>);
@@ -41,7 +45,7 @@ const ImageWithFallback = ({
         );
       });
     }
-  }, [resolvedSrc, failedSrc, onLoad, src]);
+  }, [resolvedSrc, failedSrc, src]);
 
   const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     if (src && failedSrc !== src) {

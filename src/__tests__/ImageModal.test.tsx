@@ -99,27 +99,22 @@ describe('ImageModal Lightbox', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('toggles zoom on image click in full resolution view', () => {
+  it('closes full resolution view on backdrop click but not on image click', () => {
     renderModal();
-    const modalImage = screen.getByAltText('Test Image');
-    fireEvent.click(modalImage);
+    fireEvent.click(screen.getByAltText('Test Image'));
+    const lightboxImage = screen.getAllByAltText('Test Image')[1];
 
-    // Get the lightbox image (it's the second one rendered)
-    const images = screen.getAllByAltText('Test Image');
-    const lightboxImage = images[1];
-
-    // Initial state should not have zoomed class
-    expect(lightboxImage).not.toHaveClass('isZoomed');
-
-    // Click to zoom (need mouseDown to set timing)
-    fireEvent.mouseDown(lightboxImage);
     fireEvent.click(lightboxImage);
-    expect(lightboxImage).toHaveClass('isZoomed');
+    expect(screen.getAllByAltText('Test Image')).toHaveLength(2);
 
-    // Click to unzoom
-    fireEvent.mouseDown(lightboxImage);
-    fireEvent.click(lightboxImage);
-    expect(lightboxImage).not.toHaveClass('isZoomed');
+    fireEvent.click(lightboxImage.closest('[class*="fullResOverlay"]')!);
+    expect(screen.getAllByAltText('Test Image')).toHaveLength(1);
+  });
+
+  it('opens full resolution view when process is undefined or true', () => {
+    renderModal({ ...mockImage, process: true });
+    fireEvent.click(screen.getByAltText('Test Image'));
+    expect(screen.getAllByAltText('Test Image')).toHaveLength(2);
   });
 
   it('disables zoom when image.process is false', () => {
@@ -135,6 +130,7 @@ describe('ImageModal Lightbox', () => {
     // Tooltip should be undefined/null
     expect(modalImage).not.toHaveAttribute('title');
     expect(modalImage).toHaveStyle('cursor: default');
+    expect(document.querySelector('[class*="fullResOverlay"]')).toBeNull();
   });
 
   it('switches the modal image from thumbnail to async signed URL when it arrives', () => {
