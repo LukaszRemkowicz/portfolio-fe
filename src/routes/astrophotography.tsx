@@ -1,10 +1,12 @@
 import { HydrationBoundary, dehydrate } from '@tanstack/react-query';
-import { Outlet } from 'react-router';
+import { Outlet, data } from 'react-router';
 import type { ShouldRevalidateFunction } from 'react-router';
 import type { Route } from './+types/astrophotography';
 import AstroGallery from '../components/AstroGallery';
 import MainLayout from '../components/MainLayout';
 import { APP_ROUTES } from '../api/constants';
+import { NotFoundError } from '../api/errors';
+import NotFoundPage from '../components/NotFoundPage';
 import { fetchAstroImages, fetchCategories, fetchTags } from '../api/services';
 import { ASTRO_GALLERY_PAGE_SIZE } from '../hooks/useAstroImages';
 import {
@@ -13,7 +15,7 @@ import {
   prefetchInfiniteQuerySafely,
   prefetchQuerySafely,
 } from '../utils/loaderData';
-import { routeMeta } from '../seo/buildMeta';
+import { NOT_FOUND_SEO, routeMeta } from '../seo/buildMeta';
 import { truncateText } from '../utils/html';
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -35,6 +37,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     ...(selectedPage ? { page: selectedPage } : {}),
   };
 
+  const imagesKey = ['astro-images', language, imageParams];
   const queryClient = createLoaderQueryClient();
   await Promise.all([
     prefetchQuerySafely(queryClient, {
@@ -46,7 +49,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       queryFn: () => fetchTags({ filter: selectedFilter }, client),
     }),
     prefetchInfiniteQuerySafely(queryClient, {
-      queryKey: ['astro-images', language, imageParams],
+      queryKey: imagesKey,
       initialPageParam: selectedPage ?? 1,
       queryFn: ({ pageParam }) =>
         fetchAstroImages(
@@ -60,7 +63,23 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }),
   ]);
 
+  // `?page=` beyond the last page: backend 404 -> real 404 + not-found page.
+  if (
+    selectedPage &&
+    queryClient.getQueryState(imagesKey)?.error instanceof NotFoundError
+  ) {
+    return data(
+      {
+        dehydratedState: dehydrate(queryClient),
+        seo: NOT_FOUND_SEO,
+        pageNotFound: true,
+      },
+      { status: 404 }
+    );
+  }
+
   return {
+    pageNotFound: false,
     dehydratedState: dehydrate(queryClient),
     seo: {
       title: t('common.gallery'),
@@ -92,6 +111,7 @@ export function meta({ data, matches, location }: Route.MetaArgs) {
 }
 
 export default function Astrophotography({ loaderData }: Route.ComponentProps) {
+  if (loaderData.pageNotFound) return <NotFoundPage />;
   return (
     <HydrationBoundary state={loaderData.dehydratedState}>
       {/* Child (detail) route renders no DOM; it comes first so its query data is hydrated before the gallery reads it. */}

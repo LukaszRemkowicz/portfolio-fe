@@ -31,7 +31,7 @@ const TagSidebar: React.FC<TagSidebarProps> = ({
           <button
             className={styles.closeButton}
             onClick={onToggle}
-            aria-label='Close tags'
+            aria-label={t('a11y.closeTags')}
           >
             ✕
           </button>

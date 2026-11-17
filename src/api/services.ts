@@ -2,16 +2,15 @@
  * High-level frontend data services.
  *
  * This module defines the application-facing API contract used by hooks, SSR
- * prefetch, and selected server-side views. It sits above the low-level Axios
+ * prefetch, and selected server-side views. It sits above the low-level API
  * client and below the React Query hooks:
  * - chooses backend routes
  * - applies payload normalization
  * - provides fallback behavior for selected content
  * - stays transport-agnostic while callers resolve browser vs. SSR transport
  */
-import type { AxiosInstance } from 'axios';
 import { API_ROUTES, BFF_ROUTES } from './routes';
-import { api } from './api';
+import { api, type ApiClient } from './api';
 import {
   normalizeBackgroundImage,
   normalizeAstroImage,
@@ -36,7 +35,7 @@ import {
 import { NotFoundError } from './errors';
 import { DataTransport, QueryParams, resolveDataTransport } from './transport';
 
-type ClientOrTransport = AxiosInstance | DataTransport;
+type ClientOrTransport = ApiClient | DataTransport;
 
 /** Fetch and normalize the public user profile used across the site shell. */
 export const fetchProfile = async (
@@ -108,7 +107,7 @@ export const fetchBackground = async (
 /** Fetch the astrophotography gallery list with optional filtering parameters. */
 export const fetchAstroImages = async (
   params: FilterParams = {},
-  clientOrTransport: AxiosInstance | DataTransport = api
+  clientOrTransport: ApiClient | DataTransport = api
 ): Promise<PaginatedResponse<AstroImage>> => {
   const transport = resolveDataTransport(clientOrTransport);
   const data = await transport.get<
@@ -156,7 +155,7 @@ export const fetchLatestAstroImages = async (
 /** Fetch a single astro image detail payload by slug. */
 export const fetchAstroImageDetail = async (
   slug: string,
-  clientOrTransport: AxiosInstance | DataTransport = api
+  clientOrTransport: ApiClient | DataTransport = api
 ): Promise<AstroImage> => {
   const transport = resolveDataTransport(clientOrTransport);
   const data = await transport.get<AstroImage>({
@@ -177,7 +176,7 @@ export const fetchAstroImageDetail = async (
  */
 export const fetchContact = async (
   contactData: ContactFormData,
-  clientOrTransport: AxiosInstance | DataTransport = api
+  clientOrTransport: ApiClient | DataTransport = api
 ): Promise<void> => {
   if (!contactData) throw new Error('contactData is required');
 
@@ -194,7 +193,7 @@ export const fetchContact = async (
 /** Fetch public tag options, optionally filtered by category. */
 export const fetchTags = async (
   params: { filter?: string; latest?: boolean; lang?: string } = {},
-  clientOrTransport: AxiosInstance | DataTransport = api
+  clientOrTransport: ApiClient | DataTransport = api
 ): Promise<Tag[]> => {
   const transport = resolveDataTransport(clientOrTransport);
   return transport.get<Tag[]>(
@@ -208,7 +207,7 @@ export const fetchTags = async (
 
 /** Fetch enabled frontend feature flags and configuration switches. */
 export const fetchSettings = async (
-  clientOrTransport: AxiosInstance | DataTransport = api
+  clientOrTransport: ApiClient | DataTransport = api
 ): Promise<EnabledFeatures> => {
   const transport = resolveDataTransport(clientOrTransport);
 
@@ -283,7 +282,7 @@ export const fetchTravelHighlights = async (
 
 /** Fetch the public astrophotography category list. */
 export const fetchCategories = async (
-  clientOrTransport: AxiosInstance | DataTransport = api
+  clientOrTransport: ApiClient | DataTransport = api
 ): Promise<string[]> => {
   const transport = resolveDataTransport(clientOrTransport);
   return transport.get<string[]>({

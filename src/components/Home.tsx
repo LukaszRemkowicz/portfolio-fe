@@ -1,5 +1,5 @@
 // frontend/src/components/Home.tsx
-import { type FC, useState, useEffect } from 'react';
+import { type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import styles from '../styles/components/App.module.css';
@@ -17,7 +17,6 @@ const Home: FC<HomeProps> = ({
   backgroundVariants,
 }) => {
   const { t } = useTranslation();
-  const [isLoaded, setIsLoaded] = useState(false);
 
   const displayDescription = shortDescription || t('hero.defaultDescription');
   const responsiveBackgroundProps = buildResponsiveImageProps({
@@ -26,17 +25,6 @@ const Home: FC<HomeProps> = ({
     fallbackSrc: backgroundUrl || '',
     sizes: '100vw',
   });
-
-  // SSR-safe check for already loaded images (e.g. from cache)
-  useEffect(() => {
-    const img = document.querySelector(
-      '[data-testid="hero-background-image"]'
-    ) as HTMLImageElement;
-    if (img?.complete) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsLoaded(true);
-    }
-  }, []);
 
   return (
     <section id='home' className={styles.heroSection}>
@@ -48,11 +36,9 @@ const Home: FC<HomeProps> = ({
             aria-hidden='true'
             data-testid='hero-background-image'
             className={styles.heroBackgroundImage}
-            onLoad={() => setIsLoaded(true)}
             loading='eager'
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             {...({ fetchpriority: 'high' } as any)}
-            style={{ opacity: isLoaded ? 1 : 0 }}
           />
           <div className={styles.heroBackgroundOverlay} />
         </>

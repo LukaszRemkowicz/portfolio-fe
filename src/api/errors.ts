@@ -67,3 +67,37 @@ export class UnauthorizedError extends AppError {
     Object.setPrototypeOf(this, UnauthorizedError.prototype);
   }
 }
+
+type ErrorPayload = {
+  detail?: string;
+  errors?: Record<string, string[]>;
+  message?: string;
+};
+
+/**
+ * Map an HTTP error status (+ JSON body) to the project's error classes.
+ * Shared by the browser BFF transport and the server API client.
+ */
+export const errorFromStatus = (
+  status: number,
+  payload?: ErrorPayload | null
+): AppError => {
+  const message = payload?.message || payload?.detail || undefined;
+  switch (status) {
+    case 400:
+      return new ValidationError(payload?.errors || {}, message);
+    case 401:
+    case 403:
+      return new UnauthorizedError(message, status);
+    case 404:
+      return new NotFoundError();
+    case 500:
+    case 501:
+    case 502:
+    case 503:
+    case 504:
+      return new ServerError(message, status);
+    default:
+      return new AppError(message || 'An unexpected error occurred.', status);
+  }
+};

@@ -1,4 +1,5 @@
 import React, { Suspense, lazy, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Home from './components/Home';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -17,6 +18,7 @@ import { useProfile } from './hooks/useProfile';
 import { useBackground } from './hooks/useBackground';
 
 const HomePage: React.FC = () => {
+  const { t } = useTranslation();
   const {
     data: profile,
     isLoading: isProfileLoading,
@@ -45,7 +47,7 @@ const HomePage: React.FC = () => {
           <button
             onClick={() => setIsErrorDismissed(true)}
             className={styles.dismissError}
-            aria-label='Dismiss error'
+            aria-label={t('a11y.dismissError')}
           >
             ×
           </button>

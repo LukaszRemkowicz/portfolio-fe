@@ -4,6 +4,7 @@ import styles from '../../styles/components/GalleryCard.module.css';
 import { MapPin } from 'lucide-react';
 import { AstroImage } from '../../types';
 import { stripHtml } from '../../utils/html';
+import { useIsRecent } from '../../utils/date';
 import { useQueryClient } from '@tanstack/react-query';
 import { fetchAstroImageDetail } from '../../api/services';
 import ImageWithFallback from './ImageWithFallback';
@@ -25,14 +26,7 @@ const GalleryCard = memo(
     const [hasError, setHasError] = useState(!item.fallback_image?.url);
     const queryClient = useQueryClient();
 
-    const isNew = (dateString?: string) => {
-      if (!dateString) return false;
-      const date = new Date(dateString);
-      const now = new Date();
-      const diffTime = Math.abs(now.getTime() - date.getTime());
-      const diffDays = diffTime / (1000 * 60 * 60 * 24);
-      return diffDays < 7;
-    };
+    const isNew = useIsRecent(item.created_at, 7);
 
     const description = useMemo(() => {
       if (!item.description) return '';
@@ -63,16 +57,22 @@ const GalleryCard = memo(
     };
 
     return (
-      <button
+      // Headings/paragraphs are not valid inside <button>, so the card is an
+      // <article> and a transparent button stretched over it carries the
+      // keyboard/AT interaction. Clicks bubble from the button to the card.
+      <article
         className={styles.card}
         onClick={() => onClick(item)}
         onMouseEnter={handleMouseEnter}
-        onFocus={handleMouseEnter}
-        aria-label={`View details for ${item.name}`}
-        type='button'
         data-testid={`gallery-card-${item.slug}`}
       >
-        {isNew(item.created_at) && <div className={styles.newBadge}>NEW!</div>}
+        <button
+          type='button'
+          className={styles.cardButton}
+          onFocus={handleMouseEnter}
+          aria-label={t('a11y.viewDetails', { name: item.name })}
+        />
+        {isNew && <div className={styles.newBadge}>{t('common.newBadge')}</div>}
         <div className={styles.imageWrapper} aria-hidden='true'>
           <div
             className={`${styles.placeholder} ${isLoaded ? styles.hide : ''}`}
@@ -108,7 +108,7 @@ const GalleryCard = memo(
           <p className={styles.cardDescription}>{description}</p>
           <div className={styles.divider} aria-hidden='true'></div>
         </div>
-      </button>
+      </article>
     );
   }
 );

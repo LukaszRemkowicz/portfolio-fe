@@ -78,7 +78,7 @@ console.warn = (...args) => {
 // Mock react-i18next
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => {
+    t: (key: string, options?: Record<string, unknown>) => {
       const testLang =
         (globalThis as { __TEST_I18N_LANGUAGE__?: string })
           .__TEST_I18N_LANGUAGE__ || 'en';
@@ -108,6 +108,26 @@ jest.mock('react-i18next', () => ({
         'common.noImagesFound': 'No images found for this filter.',
         'common.noImagesHint':
           'Try selecting a different category or tag to see more images.',
+        'common.newBadge': 'NEW!',
+        'errors.title': 'Something went wrong',
+        'errors.message':
+          'A celestial anomaly has occurred. Please try refreshing the page.',
+        'errors.refresh': 'Refresh Portal',
+        'errors.gallery': 'Failed to fetch gallery images.',
+        'errors.latestImages': 'Failed to load latest images.',
+        'errors.projects': 'Failed to compile projects.',
+        'errors.travel':
+          'Failed to load travel highlights. Please check the URL and try again.',
+        'errors.travelIncomplete':
+          'Incomplete location specified. URL must contain country, place, and date.',
+        'a11y.dismissError': 'Dismiss error',
+        'a11y.openMenu': 'Open menu',
+        'a11y.closeMenu': 'Close menu',
+        'a11y.closeTags': 'Close tags',
+        'a11y.closeCategories': 'Close categories',
+        'a11y.toggleLanguage': 'Toggle language',
+        'a11y.closeModal': 'Close modal',
+        'a11y.viewDetails': 'View details for {{name}}',
         'footer.rights': `${mockProjectOwner} © 2026`,
         'about.title': 'Beyond the Atmosphere.',
         'about.defaultBio':
@@ -240,7 +260,9 @@ jest.mock('react-i18next', () => ({
         return polishPrivacyTranslations[key];
       }
 
-      return translations[key] || key;
+      return (translations[key] || key).replace(/{{(\w+)}}/g, (_, name) =>
+        String(options?.[name] ?? '')
+      );
     },
     i18n: {
       changeLanguage: jest.fn(),

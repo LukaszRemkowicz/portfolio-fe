@@ -17,7 +17,10 @@ import GallerySkeleton from './skeletons/GallerySkeleton';
 import TagSidebar from './TagSidebar';
 import CategorySidebar from './CategorySidebar';
 import { Sliders, LayoutGrid } from 'lucide-react';
-import { useAstroImages } from '../hooks/useAstroImages';
+import {
+  ASTRO_GALLERY_MAX_LIMIT,
+  useAstroImages,
+} from '../hooks/useAstroImages';
 import { useTags } from '../hooks/useTags';
 import { NotFoundError } from '../api/errors';
 import { useCategories } from '../hooks/useCategories';
@@ -33,7 +36,6 @@ interface GalleryReturnLocation {
   pathname: string;
   search?: string;
   hash?: string;
-  scrollY?: number;
 }
 
 const getMinimumBatchForWidth = (width: number): number => {
@@ -68,8 +70,8 @@ const AstroGallery: React.FC = () => {
   const [minimumBatchSize, setMinimumBatchSize] = useState<number | null>(null);
   const [bootstrapTarget, setBootstrapTarget] = useState<number | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
-  const lastAutoLoadScrollYRef = useRef(Number.NEGATIVE_INFINITY);
-  const pendingScrollRestoreRef = useRef<number | null>(null);
+  const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
+  const isFirstFilterRunRef = useRef(true);
 
   const selectedFilter = searchParams.get('filter') as FilterType | null;
   const selectedTag = searchParams.get('tag');
@@ -88,12 +90,12 @@ const AstroGallery: React.FC = () => {
     const rawLimit = searchParams.get('limit');
     if (!rawLimit) return undefined;
 
-    const parsedLimit = Number(rawLimit);
-    if (!Number.isFinite(parsedLimit) || parsedLimit <= 0) {
+    const parsedLimit = Math.floor(Number(rawLimit));
+    if (!Number.isFinite(parsedLimit) || parsedLimit < 1) {
       return undefined;
     }
 
-    return parsedLimit;
+    return Math.min(parsedLimit, ASTRO_GALLERY_MAX_LIMIT);
   }, [searchParams]);
 
   const { t, i18n } = useTranslation();
@@ -156,7 +158,7 @@ const AstroGallery: React.FC = () => {
     error: modalImageError,
   } = useAstroImageDetail(imgSlug || null);
 
-  const error = queryError ? 'Failed to fetch gallery images.' : null;
+  const error = queryError ? t('errors.gallery') : null;
   const isInitialLoading = isImagesLoading && images.length === 0 && !error;
 
   const modalImage = useMemo(() => {
@@ -183,10 +185,6 @@ const AstroGallery: React.FC = () => {
       }),
     [background?.fallback_image?.url, background?.variants]
   );
-
-  useEffect(() => {
-    lastAutoLoadScrollYRef.current = Number.NEGATIVE_INFINITY;
-  }, [selectedFilter, selectedTag, effectiveLimit]);
 
   useEffect(() => {
     if (
@@ -221,31 +219,25 @@ const AstroGallery: React.FC = () => {
       return;
     }
 
-    const handleScroll = () => {
-      const cards = document.querySelectorAll('[data-testid^="gallery-card-"]');
-      const lastCard = cards[cards.length - 1] as HTMLElement | undefined;
+    const sentinel = loadMoreSentinelRef.current;
+    if (!sentinel || typeof IntersectionObserver === 'undefined') {
+      return;
+    }
 
-      if (!lastCard) {
-        return;
-      }
-
-      const lastCardRect = lastCard.getBoundingClientRect();
-      const viewportBottom = window.innerHeight;
-      const minimumScrollDelta = 160;
-
-      if (
-        lastCardRect.bottom - viewportBottom <= 240 &&
-        window.scrollY - lastAutoLoadScrollYRef.current >= minimumScrollDelta
-      ) {
-        lastAutoLoadScrollYRef.current = window.scrollY;
-        void fetchNextPage();
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    // Fires when the end of the grid comes within 240px of the viewport; the
+    // effect re-subscribes after each page so a still-visible sentinel loads on.
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries.some(entry => entry.isIntersecting)) {
+          void fetchNextPage();
+        }
+      },
+      { rootMargin: '0px 0px 240px 0px' }
+    );
+    observer.observe(sentinel);
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      observer.disconnect();
     };
   }, [
     fetchNextPage,
@@ -256,6 +248,11 @@ const AstroGallery: React.FC = () => {
   ]);
   // Smooth scroll to results on filter/tag change (Mobile only)
   useEffect(() => {
+    // Only react to user filter/tag changes, not the initial mount.
+    if (isFirstFilterRunRef.current) {
+      isFirstFilterRunRef.current = false;
+      return;
+    }
     if (window.innerWidth <= 992 && resultsRef.current) {
       requestAnimationFrame(() => {
         if (!resultsRef.current) return;
@@ -267,23 +264,6 @@ const AstroGallery: React.FC = () => {
       });
     }
   }, [selectedFilter, selectedTag]);
-
-  useEffect(() => {
-    if (
-      typeof window === 'undefined' ||
-      imgSlug ||
-      pendingScrollRestoreRef.current === null
-    ) {
-      return;
-    }
-
-    const scrollY = pendingScrollRestoreRef.current;
-    pendingScrollRestoreRef.current = null;
-
-    requestAnimationFrame(() => {
-      window.scrollTo({ top: scrollY, behavior: 'auto' });
-    });
-  }, [imgSlug, location.key]);
 
   if (
     imgSlug &&
@@ -312,7 +292,7 @@ const AstroGallery: React.FC = () => {
       nextParams.set('page', String(selectedPage));
     if (effectiveLimit) nextParams.set('limit', String(effectiveLimit));
     const qs = nextParams.toString() ? `?${nextParams.toString()}` : '';
-    navigate(`/astrophotography${qs}`);
+    navigate(`/astrophotography${qs}`, { preventScrollReset: true });
   };
 
   const handleTagSelect = (tagSlug: string | null): void => {
@@ -324,7 +304,7 @@ const AstroGallery: React.FC = () => {
       nextParams.set('page', String(selectedPage));
     if (effectiveLimit) nextParams.set('limit', String(effectiveLimit));
     const qs = nextParams.toString() ? `?${nextParams.toString()}` : '';
-    navigate(`/astrophotography${qs}`);
+    navigate(`/astrophotography${qs}`, { preventScrollReset: true });
     setIsTagsDrawerOpen(false);
   };
 
@@ -347,13 +327,15 @@ const AstroGallery: React.FC = () => {
       nextParams.set('page', String(selectedPage));
     if (effectiveLimit) nextParams.set('limit', String(effectiveLimit));
     const qs = nextParams.toString() ? `?${nextParams.toString()}` : '';
+    // preventScrollReset: the modal is a child route; the gallery behind it must
+    // keep its scroll position (RR's <ScrollRestoration> would reset to top).
     navigate(`/astrophotography/${image.slug}${qs}`, {
+      preventScrollReset: true,
       state: {
         returnToGallery: {
           pathname: location.pathname,
           search: location.search,
           hash: location.hash,
-          scrollY: typeof window === 'undefined' ? 0 : window.scrollY,
         } satisfies GalleryReturnLocation,
       },
     });
@@ -368,10 +350,9 @@ const AstroGallery: React.FC = () => {
       | undefined;
 
     if (returnToGallery?.pathname) {
-      pendingScrollRestoreRef.current = returnToGallery.scrollY ?? 0;
       navigate(
         `${returnToGallery.pathname}${returnToGallery.search || ''}${returnToGallery.hash || ''}`,
-        { replace: true }
+        { replace: true, preventScrollReset: true }
       );
       return;
     }
@@ -379,7 +360,7 @@ const AstroGallery: React.FC = () => {
     if (backgroundLocation?.pathname) {
       navigate(
         `${backgroundLocation.pathname}${backgroundLocation.search || ''}${backgroundLocation.hash || ''}`,
-        { replace: true }
+        { replace: true, preventScrollReset: true }
       );
       return;
     }
@@ -392,7 +373,7 @@ const AstroGallery: React.FC = () => {
       nextParams.set('page', String(selectedPage));
     if (effectiveLimit) nextParams.set('limit', String(effectiveLimit));
     const qs = nextParams.toString() ? `?${nextParams.toString()}` : '';
-    navigate(`/astrophotography${qs}`);
+    navigate(`/astrophotography${qs}`, { preventScrollReset: true });
   };
 
   if (isInitialLoading) return <LoadingScreen />;
@@ -505,6 +486,9 @@ const AstroGallery: React.FC = () => {
               </div>
             )}
           </div>
+          {hasNextPage && selectedPage === undefined ? (
+            <div ref={loadMoreSentinelRef} aria-hidden='true' />
+          ) : null}
         </div>
         <ImageModal image={modalImage} onClose={closeModal} />
       </div>

@@ -5,7 +5,7 @@ import { API_ROUTES, BFF_ROUTES } from '../api/routes';
 import { normalizeAstroImages } from '../api/media';
 import { DataTransport, resolveDataTransport } from '../api/transport';
 import { AstroImage } from '../types';
-import type { AxiosInstance } from 'axios';
+import type { ApiClient } from '../api/api';
 
 export interface ExtendedAstroImage extends AstroImage {
   url?: string;
@@ -30,7 +30,7 @@ export const fetchTravelHighlightDetail = async ({
   countrySlug: string;
   placeSlug: string;
   dateSlug: string;
-  clientOrTransport?: AxiosInstance | DataTransport;
+  clientOrTransport?: ApiClient | DataTransport;
 }): Promise<TravelHighlightDetail> => {
   const transport = resolveDataTransport(clientOrTransport);
   const path = [countrySlug, placeSlug, dateSlug]

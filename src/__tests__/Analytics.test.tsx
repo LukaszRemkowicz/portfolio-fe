@@ -80,6 +80,15 @@ describe('Google Analytics Utility', () => {
     expect(events.some(e => e[0] === 'config' && e[1] === GA_ID)).toBe(true);
   });
 
+  test('config disables automatic page views (SPA sends them explicitly)', () => {
+    analytics.loadGoogleAnalytics();
+    const config = Array.from(window.dataLayer)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .map(arg => Array.from(arg as any))
+      .find(e => e[0] === 'config');
+    expect(config?.[2]).toEqual({ send_page_view: false });
+  });
+
   describe('Switch Logic', () => {
     test.each(['false', '0', 'no', 'undefined', ''])(
       'does not load GA when ENABLE_GA is "%s"',

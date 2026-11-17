@@ -42,17 +42,18 @@ export const loadGoogleAnalytics = () => {
     window.dataLayer.push(arguments);
   };
 
+  // Queue js/config before the script loads (standard snippet order) so the
+  // explicit page_view events from trackPageView always follow the config.
+  if (GA_TRACKING_ID) {
+    window.gtag('js', new Date());
+    // SPA: page views are sent explicitly via trackPageView, not on config.
+    window.gtag('config', GA_TRACKING_ID, { send_page_view: false });
+  }
+
   // 2. Load script
   const script = document.createElement('script');
   script.async = true;
   script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`;
-  script.onload = () => {
-    if (!GA_TRACKING_ID) return;
-    window.gtag('js', new Date());
-    window.gtag('config', GA_TRACKING_ID, {
-      send_page_view: true,
-    });
-  };
 
   document.head.appendChild(script);
 };

@@ -220,3 +220,32 @@ describe('route loaders', () => {
     expect(fetchTravelHighlightDetail).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('astrophotography ?page= beyond the last page', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+    jest.spyOn(console, 'log').mockImplementation(() => undefined);
+  });
+
+  it('returns 404 + noindex when the backend says the page does not exist', async () => {
+    (fetchCategories as jest.Mock).mockResolvedValue([]);
+    (fetchTags as jest.Mock).mockResolvedValue([]);
+    (fetchAstroImages as jest.Mock).mockRejectedValue(new NotFoundError());
+
+    const result = await run(astroLoader, '/astrophotography?page=99');
+    expect(status(result)).toBe(404);
+    expect(body(result).seo.robots).toBe('noindex, nofollow');
+    expect((body(result) as { pageNotFound?: boolean }).pageNotFound).toBe(
+      true
+    );
+  });
+
+  it('stays 200 when the list fails for another reason', async () => {
+    (fetchCategories as jest.Mock).mockResolvedValue([]);
+    (fetchTags as jest.Mock).mockResolvedValue([]);
+    (fetchAstroImages as jest.Mock).mockRejectedValue(new Error('boom'));
+
+    const result = await run(astroLoader, '/astrophotography?page=2');
+    expect(status(result)).toBe(200);
+  });
+});

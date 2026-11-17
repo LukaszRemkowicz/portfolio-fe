@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { toPublicMediaPath } from '../../shared/media/publicMediaUrl';
+
 /**
  * Normalize backend media URLs into frontend-safe public paths for BFF responses.
  */
@@ -7,53 +9,7 @@ export function normalizePublicMediaUrl<T>(value: T): T | string {
     return value;
   }
 
-  const toFrontendImageFilePath = (pathname: string) =>
-    pathname.startsWith('/image-files/') ? `/app${pathname}` : pathname;
-
-  const isRelativePublicMedia =
-    value.startsWith('/media/') ||
-    value.startsWith('/static/') ||
-    value.startsWith('/app/image-files/') ||
-    value.startsWith('/image-files/') ||
-    /^\/v1\/images\/[^/]+\/serve\/?(?:\?.*)?$/.test(value);
-
-  if (isRelativePublicMedia) {
-    if (/^\/v1\/images\/[^/]+\/serve\/?(?:\?.*)?$/.test(value)) {
-      return value.replace(/^\/v1\/images\//, '/app/image-files/');
-    }
-    return toFrontendImageFilePath(value);
-  }
-
-  if (!value.startsWith('http://') && !value.startsWith('https://')) {
-    return value;
-  }
-
-  try {
-    const parsed = new URL(value);
-    const isPublicMedia = parsed.pathname.startsWith('/media/');
-    const isPublicStatic = parsed.pathname.startsWith('/static/');
-    const isFrontendImageFile = parsed.pathname.startsWith('/app/image-files/');
-    const isInternalImageFile = parsed.pathname.startsWith('/image-files/');
-    const isSecureImage = /^\/v1\/images\/[^/]+\/serve\/?$/.test(
-      parsed.pathname
-    );
-
-    if (isPublicMedia || isPublicStatic || isFrontendImageFile) {
-      return `${parsed.pathname}${parsed.search}`;
-    }
-
-    if (isInternalImageFile) {
-      return `/app${parsed.pathname}${parsed.search}`;
-    }
-
-    if (isSecureImage) {
-      return `${parsed.pathname.replace(/^\/v1\/images\//, '/app/image-files/')}${parsed.search}`;
-    }
-  } catch {
-    return value;
-  }
-
-  return value;
+  return toPublicMediaPath(value) ?? value;
 }
 
 export function normalizeBffPayload(payload: any, kind: string): any {
