@@ -8,6 +8,7 @@ const req = (headers: Record<string, string> = {}) =>
 afterEach(() => {
   delete process.env.CF_ACCESS_CLIENT_ID;
   delete process.env.CF_ACCESS_CLIENT_SECRET;
+  delete process.env.API_ORIGIN_SECRET;
 });
 
 describe('getOriginHeaders', () => {
@@ -16,7 +17,11 @@ describe('getOriginHeaders', () => {
       getOriginHeaders(
         req({ 'cf-connecting-ip': '1.2.3.4', 'x-real-ip': '9.9.9.9' })
       )
-    ).toEqual({ 'X-Real-IP': '1.2.3.4', 'X-Forwarded-For': '1.2.3.4' });
+    ).toEqual({
+      'X-Real-IP': '1.2.3.4',
+      'X-Forwarded-For': '1.2.3.4',
+      'X-Visitor-IP': '1.2.3.4',
+    });
     expect(getOriginHeaders(req())).toEqual({});
   });
 
@@ -28,6 +33,14 @@ describe('getOriginHeaders', () => {
     expect(getOriginHeaders(req())).toEqual({
       'CF-Access-Client-Id': 'id.access',
       'CF-Access-Client-Secret': 's3cret',
+    });
+  });
+
+  it('adds the origin secret for the hidden API only when set', () => {
+    expect(getOriginHeaders(req())).toEqual({});
+    process.env.API_ORIGIN_SECRET = 'origin-s3cret';
+    expect(getOriginHeaders(req())).toEqual({
+      'X-Origin-Secret': 'origin-s3cret',
     });
   });
 });

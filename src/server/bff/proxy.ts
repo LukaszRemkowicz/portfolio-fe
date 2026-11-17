@@ -102,7 +102,10 @@ export async function handleBffRequest(
 
   const requestOrigin = getRequestOrigin(request);
   const upstreamBaseUrl = getBackendBaseUrl(requestOrigin);
-  const upstreamUrl = new URL(route.backendPath, upstreamBaseUrl);
+  // Append, not resolve: keeps a base path such as /functions/v1/api.
+  const upstreamUrl = new URL(
+    `${upstreamBaseUrl.replace(/\/+$/, '')}${route.backendPath}`
+  );
   const logFields = {
     kind: route.kind === 'image-file' ? 'bff-image' : 'bff',
     method: request.method,
