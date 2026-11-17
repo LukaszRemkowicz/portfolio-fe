@@ -48,6 +48,19 @@ describe('handleBffRequest', () => {
     }
   });
 
+  it('keeps the upstream base path (hidden Supabase API) for JSON and image-file routes', async () => {
+    process.env.SSR_API_URL = 'https://p.supabase.co/functions/v1/api/';
+    upstream.mockResolvedValue(jsonUpstream({}));
+    await call('/app/settings/');
+    await call('/app/image-files/some-slug/serve/?s=abc&e=1');
+    expect(String(upstream.mock.calls[0][0])).toBe(
+      'https://p.supabase.co/functions/v1/api/v1/settings/'
+    );
+    expect(String(upstream.mock.calls[1][0])).toBe(
+      'https://p.supabase.co/functions/v1/api/image-files/some-slug/serve/?s=abc&e=1'
+    );
+  });
+
   it('returns 404 for unknown paths and invalid slugs', async () => {
     expect((await call('/app/nope')).status).toBe(404);
     expect((await call('/app/astroimages/bad%2Fslug')).status).toBe(404);
