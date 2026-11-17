@@ -13,5 +13,6 @@ export default [
   route('app/*', 'routes/bff.ts'),
   route('health', 'routes/health.ts'),
   route('robots.txt', 'routes/robots.ts'),
+  route('.well-known/security.txt', 'routes/security.ts'),
   route('*', 'routes/not-found.tsx'),
 ] satisfies RouteConfig;
