@@ -4,6 +4,8 @@ import { I18nextProvider } from 'react-i18next';
 import { ServerRouter } from 'react-router';
 import type { EntryContext } from 'react-router';
 import { createServerI18n } from './i18n.server';
+import { NonceContext } from './server/nonce';
+import { applyCsp, generateNonce } from './server/csp';
 import { getRequestLanguage } from './utils/requestMeta';
 
 // Max time to wait for Suspense boundaries (bots/SPA wait for allReady).
@@ -15,6 +17,7 @@ export default async function handleRequest(
   responseHeaders: Headers,
   routerContext: EntryContext
 ) {
+  const nonce = generateNonce();
   const i18n = await createServerI18n(getRequestLanguage(request));
 
   const controller = new AbortController();
@@ -24,7 +27,9 @@ export default async function handleRequest(
   let shellRendered = false;
   const body = await renderToReadableStream(
     <I18nextProvider i18n={i18n}>
-      <ServerRouter context={routerContext} url={request.url} />
+      <NonceContext.Provider value={nonce}>
+        <ServerRouter context={routerContext} url={request.url} nonce={nonce} />
+      </NonceContext.Provider>
     </I18nextProvider>,
     {
       signal: controller.signal,
@@ -47,6 +52,7 @@ export default async function handleRequest(
   }
 
   responseHeaders.set('Content-Type', 'text/html; charset=utf-8');
+  applyCsp(responseHeaders, nonce, process.env);
   return new Response(body, {
     headers: responseHeaders,
     status: responseStatusCode,

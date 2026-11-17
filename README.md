@@ -67,6 +67,13 @@ Tip: `PLAYWRIGHT_CHANNEL=chrome npx playwright test` uses the installed Chrome. 
 
 The version lives only in `package.json`. `.github/workflows/ci-cd.yml` runs lint/format/type-check, Jest with coverage, Playwright e2e, staging and production build + `wrangler deploy --dry-run`, Trivy and `audit-ci`. `.github/workflows/release.yml`: a new `package.json` version merged to `main` is tagged `v<version>` and deployed to the `portfolio-fe-production` Worker (needs `CLOUDFLARE_API_TOKEN`, see `.github/SECRETS.md`).
 
+## Security headers and CSP
+
+- `workers/app.ts` adds HSTS, `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy` to every Worker response (`src/server/securityHeaders.ts`; existing headers are kept). `public/_headers` has the same set for static assets.
+- HTML responses also get a per-request-nonce CSP (`src/server/csp.ts`, set in `src/entry.server.tsx`). Default is `Content-Security-Policy-Report-Only`; set `CSP_MODE=enforce` (Worker var) to send `Content-Security-Policy`. GA hosts are allowed only when `ENABLE_GA=true` and `GA_TRACKING_ID` is set.
+- With a valid `SENTRY_DSN_FE`, violations go to Sentry (`report-uri` + `report-to csp-endpoint` + `Reporting-Endpoints`) and the Sentry origin is added to `connect-src`.
+- To enforce: watch Sentry reports for a while, add legitimate hosts to `buildCsp`, then set `CSP_MODE=enforce`. Cloudflare's injected JS-detections script will show as report noise.
+
 ## Public routes
 
 `/`, `/astrophotography`, `/astrophotography/:slug`, `/travel/:country/:place/:date`, `/privacy`, `/shop` and `/programming` (both feature-flagged; disabled means 404), `/health`, `/robots.txt`. `/app/*` is BFF transport, not a website route.

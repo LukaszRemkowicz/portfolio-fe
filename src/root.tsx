@@ -27,6 +27,7 @@ import {
   fetchSettings,
   fetchTravelHighlights,
 } from './api/services';
+import { useNonce } from './server/nonce';
 import { createServerI18n } from './i18n.server';
 import { RequestOriginContext } from './context/RequestOriginContext';
 import { useGoogleAnalytics } from './hooks/useGoogleAnalytics';
@@ -142,6 +143,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const data = useRouteLoaderData<typeof loader>('root');
   const language = data?.language ?? 'en';
   const env = data?.publicEnv;
+  const nonce = useNonce() || undefined;
+  const inline = { nonce, suppressHydrationWarning: true };
 
   return (
     <html lang={language}>
@@ -163,14 +166,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
           crossOrigin=''
         />
         <meta name='theme-color' content='#02040a' />
-        <style dangerouslySetInnerHTML={{ __html: CRITICAL_CSS }} />
-        <style dangerouslySetInnerHTML={{ __html: FONT_FACE_CSS }} />
+        <style {...inline} dangerouslySetInnerHTML={{ __html: CRITICAL_CSS }} />
+        <style
+          {...inline}
+          dangerouslySetInnerHTML={{ __html: FONT_FACE_CSS }}
+        />
         <link rel='icon' href='/favicon.ico' />
         <link rel='apple-touch-icon' href='/logo192.png' />
         <Meta />
         <Links />
         {env && (
           <script
+            {...inline}
             dangerouslySetInnerHTML={{
               __html: `window.__PUBLIC_ENV__ = ${serializeForHtml({
                 API_URL: env.API_URL,
@@ -185,11 +192,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
           />
         )}
         <script
+          {...inline}
           dangerouslySetInnerHTML={{
             __html: `window.__INITIAL_LANGUAGE__ = ${JSON.stringify(language)};`,
           }}
         />
         <script
+          {...inline}
           dangerouslySetInnerHTML={{ __html: LANGUAGE_BOOTSTRAP_SCRIPT }}
         />
       </head>
