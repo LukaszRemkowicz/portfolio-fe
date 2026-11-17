@@ -17,7 +17,15 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const logFields = { kind: 'sitemap', method: 'GET', path: '/sitemap.xml' };
 
   try {
-    const response = await fetch(url, { headers });
+    const response = await fetch(url, {
+      headers,
+      // Never follow a redirect with the origin secret; bound the wait.
+      redirect: 'manual',
+      signal: AbortSignal.timeout(8000),
+    });
+    if (response.status >= 300 && response.status < 400) {
+      throw new Error(`Unexpected upstream redirect (${response.status})`);
+    }
     const body = await response.text();
     logRequest(
       {

@@ -11,7 +11,6 @@ import {
 import type { ShouldRevalidateFunction } from 'react-router';
 import {
   HydrationBoundary,
-  QueryClient,
   QueryClientProvider,
   dehydrate,
 } from '@tanstack/react-query';
@@ -27,10 +26,13 @@ import {
   fetchSettings,
   fetchTravelHighlights,
 } from './api/services';
+import { useNonce } from './server/nonce';
 import { createServerI18n } from './i18n.server';
 import { RequestOriginContext } from './context/RequestOriginContext';
 import { useGoogleAnalytics } from './hooks/useGoogleAnalytics';
 import { hasAnalyticsConsent } from './utils/analytics';
+import { captureError } from './utils/sentry';
+import { createAppQueryClient } from './utils/queryClient';
 import { getRequestLanguage, getRequestOrigin } from './utils/requestMeta';
 import { getOriginHeaders } from './server/originHeaders';
 import {
@@ -142,6 +144,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const data = useRouteLoaderData<typeof loader>('root');
   const language = data?.language ?? 'en';
   const env = data?.publicEnv;
+  const nonce = useNonce() || undefined;
+  const inline = { nonce, suppressHydrationWarning: true };
 
   return (
     <html lang={language}>
@@ -163,14 +167,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
           crossOrigin=''
         />
         <meta name='theme-color' content='#02040a' />
-        <style dangerouslySetInnerHTML={{ __html: CRITICAL_CSS }} />
-        <style dangerouslySetInnerHTML={{ __html: FONT_FACE_CSS }} />
+        <style {...inline} dangerouslySetInnerHTML={{ __html: CRITICAL_CSS }} />
+        <style
+          {...inline}
+          dangerouslySetInnerHTML={{ __html: FONT_FACE_CSS }}
+        />
         <link rel='icon' href='/favicon.ico' />
         <link rel='apple-touch-icon' href='/logo192.png' />
         <Meta />
         <Links />
         {env && (
           <script
+            {...inline}
             dangerouslySetInnerHTML={{
               __html: `window.__PUBLIC_ENV__ = ${serializeForHtml({
                 API_URL: env.API_URL,
@@ -185,11 +193,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
           />
         )}
         <script
+          {...inline}
           dangerouslySetInnerHTML={{
             __html: `window.__INITIAL_LANGUAGE__ = ${JSON.stringify(language)};`,
           }}
         />
         <script
+          {...inline}
           dangerouslySetInnerHTML={{ __html: LANGUAGE_BOOTSTRAP_SCRIPT }}
         />
       </head>
@@ -211,14 +221,7 @@ function AnalyticsTracker({ hasConsented }: { hasConsented: boolean }) {
 export default function Root({ loaderData }: Route.ComponentProps) {
   const { i18n } = useTranslation();
   const { revalidate } = useRevalidator();
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: { retry: 2, refetchOnWindowFocus: false },
-        },
-      })
-  );
+  const [queryClient] = useState(createAppQueryClient);
   const [hasConsented, setHasConsented] = useState(() => hasAnalyticsConsent());
 
   // On language change refetch server-translated data that is not keyed by
@@ -261,7 +264,10 @@ export default function Root({ loaderData }: Route.ComponentProps) {
             </AppErrorBoundary>
           </div>
           <ClientOnly>
-            <CookieConsent onAccept={() => setHasConsented(true)} />
+            <CookieConsent
+              onAccept={() => setHasConsented(true)}
+              onDecline={() => setHasConsented(false)}
+            />
           </ClientOnly>
         </HydrationBoundary>
       </RequestOriginContext.Provider>
@@ -271,6 +277,8 @@ export default function Root({ loaderData }: Route.ComponentProps) {
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   console.error('Uncaught error:', error);
+  // Render also runs during SSR; report only from the browser.
+  useEffect(() => captureError(error), [error]);
   return (
     <div className={`${styles.appContainer} ${styles.astroBg}`}>
       <ErrorFallback />

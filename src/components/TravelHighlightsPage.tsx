@@ -39,9 +39,9 @@ const TravelHighlightsPage: React.FC = () => {
   } = useTravelHighlightDetail(countrySlug, placeSlug, dateSlug);
 
   const error = hasIncompleteParams
-    ? 'Incomplete location specified. URL must contain country, place, and date.'
+    ? t('errors.travelIncomplete')
     : queryError
-      ? 'Failed to load travel highlights. Please check the URL and try again.'
+      ? t('errors.travel')
       : null;
 
   const loading = queryLoading && !hasIncompleteParams;
@@ -115,8 +115,11 @@ const TravelHighlightsPage: React.FC = () => {
     return dateStr.replace(
       /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/g,
       match => {
-        const dummyDate = new Date(2000, months[match], 1);
-        return dummyDate.toLocaleDateString(lang, { month: 'short' });
+        const dummyDate = new Date(Date.UTC(2000, months[match], 1));
+        return dummyDate.toLocaleDateString(lang, {
+          month: 'short',
+          timeZone: 'UTC',
+        });
       }
     );
   };

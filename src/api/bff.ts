@@ -5,10 +5,9 @@
  * instead of calling backend `/v1/*` routes directly. SSR code should continue
  * to use the backend client directly and avoid looping through the BFF layer.
  */
-import type { AxiosInstance } from 'axios';
-import { api } from './api';
+import { api, type ApiClient } from './api';
 import i18n from '../i18n.client';
-import { AppError, NotFoundError, ValidationError } from './errors';
+import { AppError, errorFromStatus } from './errors';
 
 type BffErrorPayload = {
   detail?: string;
@@ -17,46 +16,8 @@ type BffErrorPayload = {
 };
 
 /** Detect the default browser transport path: browser runtime + shared API client. */
-export const isBrowserDefaultClient = (client: AxiosInstance = api): boolean =>
+export const isBrowserDefaultClient = (client: ApiClient = api): boolean =>
   typeof window !== 'undefined' && client === api;
-
-/** Translate frontend BFF error payloads into the same app error types as Axios calls. */
-const throwBffError = (
-  status: number,
-  payload: BffErrorPayload | null | undefined
-): never => {
-  switch (status) {
-    case 400:
-      throw new ValidationError(
-        payload?.errors || {},
-        payload?.message || payload?.detail || 'Validation failed.'
-      );
-    case 401:
-    case 403:
-      throw new AppError(
-        payload?.message || payload?.detail || 'Unauthorized access.',
-        status
-      );
-    case 404:
-      throw new NotFoundError();
-    case 500:
-    case 501:
-    case 502:
-    case 503:
-    case 504:
-      throw new AppError(
-        payload?.message ||
-          payload?.detail ||
-          'Internal server error. Please try again later.',
-        status
-      );
-    default:
-      throw new AppError(
-        payload?.message || payload?.detail || 'An unexpected error occurred.',
-        status
-      );
-  }
-};
 
 /** Perform a browser-side GET against a frontend-owned JSON endpoint. */
 export const fetchBffJson = async <TResponse>(
@@ -81,7 +42,7 @@ export const fetchBffJson = async <TResponse>(
     BffErrorPayload;
 
   if (!response.ok) {
-    throwBffError(response.status, payload);
+    throw errorFromStatus(response.status, payload);
   }
 
   return payload;
@@ -103,7 +64,7 @@ export const postBffJson = async <TResponse>(
   urlWithLang.searchParams.set('lang', lang);
 
   const controller = new AbortController();
-  const timeoutMs = options.timeoutMs ?? 1500;
+  const timeoutMs = options.timeoutMs ?? 15000; // only caller is the contact form (writes can be slow on a cold Edge Function)
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
@@ -121,7 +82,7 @@ export const postBffJson = async <TResponse>(
       BffErrorPayload;
 
     if (!response.ok) {
-      throwBffError(response.status, payload);
+      throw errorFromStatus(response.status, payload);
     }
 
     return payload;

@@ -4,6 +4,8 @@ import { fetchAstroImages } from '../api/services';
 import { AstroImage, FilterParams, PaginatedResponse } from '../types';
 
 export const ASTRO_GALLERY_PAGE_SIZE = 15;
+// Backend page-size ceiling; `?limit=` from the URL is capped to it.
+export const ASTRO_GALLERY_MAX_LIMIT = 48;
 
 const getNextPageNumber = (
   nextUrl: string | null | undefined

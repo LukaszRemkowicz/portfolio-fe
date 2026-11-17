@@ -4,6 +4,7 @@
 // This file must NEVER be imported in any server (SSR) path.
 
 import { getEnv } from './env';
+import { setSentry } from './sentry';
 
 function initSentry(dsn: string, environment: string): void {
   if (!dsn || ['development', 'dev'].includes(environment)) return;
@@ -19,13 +20,15 @@ function initSentry(dsn: string, environment: string): void {
         if (Sentry?.init) {
           Sentry.init({
             dsn,
-            defaultIntegrations: false,
+            // Default integrations stay on: global error/unhandledrejection
+            // handlers, linked errors and dedupe.
             integrations: Sentry.browserTracingIntegration
               ? [Sentry.browserTracingIntegration()]
               : [],
             tracesSampleRate: 0.1,
             environment,
           });
+          setSentry(Sentry);
         }
       })
       .catch(err => console.warn('Sentry failed to load:', err));
@@ -48,6 +51,17 @@ function initSentry(dsn: string, environment: string): void {
   interactionEvents.forEach(e =>
     window.addEventListener(e, triggerSentry, { once: true, passive: true })
   );
+
+  // Also load when idle after page load so early errors are not lost.
+  const scheduleIdle = () => {
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(triggerSentry, { timeout: 5000 });
+    } else {
+      setTimeout(triggerSentry, 3000);
+    }
+  };
+  if (document.readyState === 'complete') scheduleIdle();
+  else window.addEventListener('load', scheduleIdle, { once: true });
 }
 
 export function initClientServices(): void {

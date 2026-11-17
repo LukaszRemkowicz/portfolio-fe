@@ -43,6 +43,7 @@ describe('Google Analytics Utility', () => {
   });
 
   test('trackPageView captures events in dataLayer via gtag stub', () => {
+    localStorage.setItem('cookieConsent', 'true');
     analytics.loadGoogleAnalytics();
     const path = '/home';
 
@@ -77,6 +78,15 @@ describe('Google Analytics Utility', () => {
     );
     expect(events.some(e => e[0] === 'js')).toBe(true);
     expect(events.some(e => e[0] === 'config' && e[1] === GA_ID)).toBe(true);
+  });
+
+  test('config disables automatic page views (SPA sends them explicitly)', () => {
+    analytics.loadGoogleAnalytics();
+    const config = Array.from(window.dataLayer)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .map(arg => Array.from(arg as any))
+      .find(e => e[0] === 'config');
+    expect(config?.[2]).toEqual({ send_page_view: false });
   });
 
   describe('Switch Logic', () => {

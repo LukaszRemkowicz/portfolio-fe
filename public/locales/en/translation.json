@@ -42,7 +42,8 @@
     "loadMoreGallery": "Load more",
     "loadingMore": "Loading more...",
     "noImagesFound": "No images found for this filter.",
-    "noImagesHint": "Try selecting a different category or tag to see more images."
+    "noImagesHint": "Try selecting a different category or tag to see more images.",
+    "newBadge": "NEW!"
   },
   "programming": {
     "title": "Project Archive",
@@ -115,6 +116,7 @@
     "sending": "Sending...",
     "success": "Thank you! Your message has been sent successfully.",
     "error": "Transmission failure. Please check your signal or try again later.",
+    "timeout": "The request took too long. Please try again in a moment.",
     "validationError": "One or more details in your inquiry require adjustment.",
     "errors": {
       "name": "Name must be at least 2 characters long.",
@@ -222,5 +224,25 @@
       "body": "If you have questions about this privacy policy or how your data is handled, please contact me via the contact form on this website."
     },
     "footer": "This privacy policy is effective as of the date stated above and will remain in effect except with respect to any changes in its provisions in the future."
+  },
+  "errors": {
+    "title": "Something went wrong",
+    "message": "A celestial anomaly has occurred. Please try refreshing the page.",
+    "refresh": "Refresh Portal",
+    "gallery": "Failed to fetch gallery images.",
+    "latestImages": "Failed to load latest images.",
+    "projects": "Failed to compile projects.",
+    "travel": "Failed to load travel highlights. Please check the URL and try again.",
+    "travelIncomplete": "Incomplete location specified. URL must contain country, place, and date."
+  },
+  "a11y": {
+    "dismissError": "Dismiss error",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "closeTags": "Close tags",
+    "closeCategories": "Close categories",
+    "toggleLanguage": "Toggle language",
+    "closeModal": "Close modal",
+    "viewDetails": "View details for {{name}}"
   }
 }

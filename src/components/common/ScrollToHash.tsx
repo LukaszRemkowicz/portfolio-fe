@@ -1,77 +1,38 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useLocation } from 'react-router';
+
+// Scroll position and hashes whose element already exists are handled by
+// React Router's <ScrollRestoration>. This only covers anchors that mount late
+// (lazy sections, e.g. `#contact`): scroll once when the element appears, give
+// up after a short window.
+const HASH_WAIT_MS = 1500;
 
 const ScrollToHash = () => {
   const { hash, pathname } = useLocation();
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const observerRef = useRef<MutationObserver | null>(null);
 
   useEffect(() => {
-    // Prevent browser from restoring scroll position automatically when navigating
-    if ('scrollRestoration' in window.history) {
-      window.history.scrollRestoration = 'manual';
+    if (!hash) return;
+
+    let id = hash.slice(1);
+    try {
+      id = decodeURIComponent(id);
+    } catch {
+      // malformed escape: use the raw fragment
     }
+    if (!id || document.getElementById(id)) return;
 
-    // Clean up previous checks
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-      observerRef.current = null;
-    }
-
-    if (!hash) {
-      window.scrollTo(0, 0);
-      return;
-    }
-
-    const elementId = hash.replace('#', '');
-
-    const tryScroll = () => {
-      const element = document.getElementById(elementId);
-      if (element) {
-        // Double requestAnimationFrame to ensure we're in the next paint cycle
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            // We use 'auto' for instant jump during loading phase to prevent visible scrolling artifacts
-            // when multiple layout shifts happen
-            element.scrollIntoView({ behavior: 'auto', block: 'start' });
-          });
-        });
-        return true;
-      }
-      return false;
-    };
-
-    // Attempt immediately
-    tryScroll();
-
-    // Observe DOM changes to handle lazy loaded content and layout shifts
     const observer = new MutationObserver(() => {
-      tryScroll();
+      const element = document.getElementById(id);
+      if (!element) return;
+      observer.disconnect();
+      element.scrollIntoView({ behavior: 'auto', block: 'start' });
     });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true, // Also watch for attribute changes that might affect layout
-    });
-    observerRef.current = observer;
-
-    // Keep observing for a window of time to ensure we catch all lazy loads
-    // 2.5 seconds should be enough for most content to settle
-    timeoutRef.current = setTimeout(() => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-        observerRef.current = null;
-      }
-    }, 2500);
+    observer.observe(document.body, { childList: true, subtree: true });
+    const timeout = setTimeout(() => observer.disconnect(), HASH_WAIT_MS);
 
     return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (observerRef.current) observerRef.current.disconnect();
+      clearTimeout(timeout);
+      observer.disconnect();
     };
   }, [hash, pathname]);
 

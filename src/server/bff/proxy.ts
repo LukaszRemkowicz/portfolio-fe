@@ -11,6 +11,7 @@ import {
 } from './validation';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json; charset=utf-8' };
+const UPSTREAM_TIMEOUT_MS = 8000;
 const NO_BODY_STATUSES = new Set([101, 204, 205, 304]);
 
 const jsonResponse = (status: number, body: unknown, headers = {}) =>
@@ -127,6 +128,7 @@ export async function handleBffRequest(
       const response = await fetch(upstreamUrl, {
         headers,
         redirect: 'manual',
+        signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
       });
       const upstreamDuration = Date.now() - startedAt;
       const body = await response.arrayBuffer();
@@ -158,11 +160,17 @@ export async function handleBffRequest(
       });
     }
 
-    let init: RequestInit = { headers };
+    // A 3xx from the JSON API is unexpected; never follow it with the origin secret.
+    let init: RequestInit = {
+      headers,
+      redirect: 'manual',
+      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+    };
     if (request.method === 'POST') {
       assertJsonContentType(request);
       const body = await readJsonBody(request);
       init = {
+        ...init,
         method: request.method,
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: body ? JSON.stringify(body) : null,
@@ -174,6 +182,13 @@ export async function handleBffRequest(
     const startedAt = Date.now();
     const response = await fetch(upstreamUrl, init);
     const upstreamDuration = Date.now() - startedAt;
+    if (response.status >= 300 && response.status < 400) {
+      logRequest(
+        { ...logFields, status: 502, duration_ms: Date.now() - start },
+        requestId
+      );
+      return jsonResponse(502, { message: 'Unexpected upstream redirect.' });
+    }
     const payload = normalizeBffPayload(
       await readUpstreamPayload(response),
       route.kind
@@ -205,6 +220,18 @@ export async function handleBffRequest(
         requestId
       );
       return jsonResponse(error.statusCode, { message: error.message });
+    }
+    if ((error as { name?: string })?.name === 'TimeoutError') {
+      logRequest(
+        {
+          ...logFields,
+          status: 504,
+          duration_ms: Date.now() - start,
+          error: (error as Error).message,
+        },
+        requestId
+      );
+      return jsonResponse(504, { message: 'Upstream request timed out.' });
     }
     logRequest(
       {

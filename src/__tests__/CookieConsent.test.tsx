@@ -1,6 +1,7 @@
 import { render, screen, act, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import '@testing-library/jest-dom';
+import { trackPageView } from '../utils/analytics';
 import CookieConsent from '../components/common/CookieConsent';
 
 const renderWithRouter = (component: React.ReactElement) => {
@@ -104,6 +105,32 @@ describe('CookieConsent Component', () => {
     });
 
     const link = screen.getByRole('link', { name: 'Privacy Policy' });
-    expect(link).toHaveAttribute('href', '/privacy-policy');
+    expect(link).toHaveAttribute('href', '/privacy');
+  });
+
+  it('decline after accept: onDecline, gtag denied, GA cookies cleared, no page views', () => {
+    localStorage.setItem('cookieConsent', 'true');
+    const gtag = jest.fn();
+    window.gtag = gtag;
+    document.cookie = '_ga=1; path=/';
+    document.cookie = '_ga_ABC=1; path=/';
+    const onDecline = jest.fn();
+    renderWithRouter(
+      <CookieConsent onAccept={jest.fn()} onDecline={onDecline} />
+    );
+    act(() => {
+      (
+        window as unknown as { openCookieSettings?: () => void }
+      ).openCookieSettings?.();
+    });
+    fireEvent.click(screen.getByText('Decline'));
+    expect(onDecline).toHaveBeenCalled();
+    expect(gtag).toHaveBeenCalledWith('consent', 'update', {
+      analytics_storage: 'denied',
+    });
+    expect(document.cookie).not.toContain('_ga');
+    gtag.mockClear();
+    trackPageView('/x');
+    expect(gtag).not.toHaveBeenCalled();
   });
 });

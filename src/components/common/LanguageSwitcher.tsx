@@ -5,7 +5,7 @@ import { Globe } from 'lucide-react';
 import styles from '../../styles/components/LanguageSwitcher.module.css';
 
 const LanguageSwitcher: React.FC = () => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const toggleLanguage = () => {
     const lang = i18n.language || 'en';
@@ -23,7 +23,7 @@ const LanguageSwitcher: React.FC = () => {
     <button
       className={styles.switcher}
       onClick={toggleLanguage}
-      aria-label='Toggle language'
+      aria-label={t('a11y.toggleLanguage')}
     >
       <Globe className={styles.icon} />
       <span className={styles.textContainer}>

@@ -14,6 +14,7 @@ import {
 } from '../utils/loaderData';
 import { NOT_FOUND_SEO, routeMeta } from '../seo/buildMeta';
 import type { RouteSeo } from '../seo/buildMeta';
+import { isSafeSlug } from '../utils/slug';
 import { stripHtml, truncateText } from '../utils/html';
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {
@@ -24,27 +25,30 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const { countrySlug, placeSlug, dateSlug } = params;
   const queryClient = createLoaderQueryClient();
 
-  const { data: detail, notFound } =
-    await fetchQueryOrNotFound<TravelHighlightDetail>(
-      queryClient,
-      {
-        queryKey: [
-          'travel-highlight',
-          language,
-          countrySlug,
-          placeSlug,
-          dateSlug,
-        ],
-        queryFn: () =>
-          fetchTravelHighlightDetail({
+  // Unsafe slugs (e.g. `..%2Fsettings`) never reach the upstream path.
+  const safe = [countrySlug, placeSlug, dateSlug].every(isSafeSlug);
+  const { data: detail, notFound } = !safe
+    ? { data: null, notFound: true }
+    : await fetchQueryOrNotFound<TravelHighlightDetail>(
+        queryClient,
+        {
+          queryKey: [
+            'travel-highlight',
+            language,
             countrySlug,
             placeSlug,
             dateSlug,
-            clientOrTransport: client,
-          }),
-      },
-      error => error instanceof NotFoundError
-    );
+          ],
+          queryFn: () =>
+            fetchTravelHighlightDetail({
+              countrySlug,
+              placeSlug,
+              dateSlug,
+              clientOrTransport: client,
+            }),
+        },
+        error => error instanceof NotFoundError
+      );
 
   // Mirrors TravelHighlightsPage's former <SEO> (including its no-data fallbacks).
   const fullLocation = detail?.full_location || 'Travel Highlights';

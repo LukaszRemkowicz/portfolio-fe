@@ -30,7 +30,7 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
         <button
           className={styles.closeButton}
           onClick={onToggle}
-          aria-label='Close categories'
+          aria-label={t('a11y.closeCategories')}
         >
           ✕
         </button>

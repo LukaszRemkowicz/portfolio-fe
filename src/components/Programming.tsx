@@ -85,7 +85,7 @@ const Programming: FC = () => {
     isLoading: loading,
     error: queryError,
   } = useProjects();
-  const error = queryError ? 'Failed to compile projects.' : null;
+  const error = queryError ? t('errors.projects') : null;
 
   if (error) {
     return (

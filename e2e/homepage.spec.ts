@@ -10,7 +10,10 @@ test.describe('Landing Page', () => {
   test('language round trip keeps backend text in the right language', async ({
     page,
   }) => {
-    const toggle = page.getByRole('button', { name: 'Toggle language' });
+    // The aria-label is translated, so it changes after the first switch.
+    const toggle = page.getByRole('button', {
+      name: /^(Toggle language|Zmień język)$/,
+    });
     const main = page.locator('main');
     await expect(main).toContainText('Sky and landscape hunter');
 

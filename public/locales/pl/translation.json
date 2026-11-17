@@ -42,7 +42,8 @@
     "loadMoreGallery": "Załaduj więcej",
     "loadingMore": "Ładowanie kolejnych...",
     "noImagesFound": "Nie znaleziono zdjęć dla tego filtra.",
-    "noImagesHint": "Spróbuj wybrać inną kategorię lub tag, aby zobaczyć więcej zdjęć."
+    "noImagesHint": "Spróbuj wybrać inną kategorię lub tag, aby zobaczyć więcej zdjęć.",
+    "newBadge": "NOWE!"
   },
   "programming": {
     "title": "Archiwum Projektów",
@@ -115,6 +116,7 @@
     "sending": "Wysyłanie...",
     "success": "Dziękujemy! Twoja wiadomość została wysłana pomyślnie.",
     "error": "Błąd transmisji. Sprawdź sygnał lub spróbuj ponownie później.",
+    "timeout": "Żądanie trwało zbyt długo. Spróbuj ponownie za chwilę.",
     "validationError": "Jedna lub więcej szczegółów zapytania wymaga korekty.",
     "errors": {
       "name": "Imię musi mieć co najmniej 2 znaki.",
@@ -222,5 +224,25 @@
       "body": "Jeśli masz pytania dotyczące tej polityki prywatności lub sposobu przetwarzania danych, skontaktuj się ze mną za pomocą formularza kontaktowego na tej stronie."
     },
     "footer": "Niniejsza polityka prywatności obowiązuje od daty podanej powyżej i pozostanie w mocy z wyjątkiem ewentualnych zmian jej postanowień w przyszłości."
+  },
+  "errors": {
+    "title": "Coś poszło nie tak",
+    "message": "Wystąpiła kosmiczna anomalia. Spróbuj odświeżyć stronę.",
+    "refresh": "Odśwież portal",
+    "gallery": "Nie udało się pobrać zdjęć galerii.",
+    "latestImages": "Nie udało się wczytać najnowszych zdjęć.",
+    "projects": "Nie udało się wczytać projektów.",
+    "travel": "Nie udało się wczytać podróży. Sprawdź adres URL i spróbuj ponownie.",
+    "travelIncomplete": "Podano niepełną lokalizację. Adres URL musi zawierać kraj, miejsce i datę."
+  },
+  "a11y": {
+    "dismissError": "Zamknij błąd",
+    "openMenu": "Otwórz menu",
+    "closeMenu": "Zamknij menu",
+    "closeTags": "Zamknij tagi",
+    "closeCategories": "Zamknij kategorie",
+    "toggleLanguage": "Zmień język",
+    "closeModal": "Zamknij okno",
+    "viewDetails": "Zobacz szczegóły: {{name}}"
   }
 }

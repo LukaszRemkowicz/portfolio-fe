@@ -6,6 +6,7 @@
  * browser-safe URLs that stay aligned with `SITE_DOMAIN`.
  */
 import { API_BASE_URL } from './routes';
+import { toPublicMediaPath } from '../shared/media/publicMediaUrl';
 import type {
   AstroImage,
   BackgroundImage,
@@ -16,30 +17,6 @@ import type {
   UserProfile,
 } from '../types';
 
-const toSameOriginPath = (input: URL | string): string => {
-  if (typeof input === 'string') {
-    return input;
-  }
-
-  return `${input.pathname}${input.search}`;
-};
-
-const toFrontendImageFilePath = (path: string): string => {
-  if (path.startsWith('/app/image-files/')) {
-    return path;
-  }
-
-  if (path.startsWith('/image-files/')) {
-    return `/app${path}`;
-  }
-
-  if (/^\/v1\/images\/[^/]+\/serve\/?(?:\?.*)?$/.test(path)) {
-    return path.replace(/^\/v1\/images\//, '/app/image-files/');
-  }
-
-  return path;
-};
-
 /**
  * Normalize a backend media path into the public URL that the browser should
  * request. Public `/media/*` and signed image serve URLs are rewritten onto the
@@ -48,44 +25,10 @@ const toFrontendImageFilePath = (path: string): string => {
 export const getMediaUrl = (path: string | null | undefined): string | null => {
   if (!path) return null;
 
-  const isPublicRelativeMedia =
-    path.startsWith('/media/') ||
-    path.startsWith('/static/') ||
-    path.startsWith('/app/image-files/') ||
-    path.startsWith('/image-files/') ||
-    /^\/v1\/images\/[^/]+\/serve\/?(?:\?.*)?$/.test(path);
-
-  if (isPublicRelativeMedia) {
-    return toFrontendImageFilePath(path);
-  }
+  const publicPath = toPublicMediaPath(path);
+  if (publicPath !== undefined) return publicPath;
 
   if (path.startsWith('http://') || path.startsWith('https://')) {
-    try {
-      const url = new URL(path);
-      const isPublicMedia = url.pathname.startsWith('/media/');
-      const isPublicStatic = url.pathname.startsWith('/static/');
-      const isInternalImageFile = url.pathname.startsWith('/image-files/');
-      const isFrontendImageFile = url.pathname.startsWith('/app/image-files/');
-      const isSecureImageServe = /^\/v1\/images\/[^/]+\/serve\/?$/.test(
-        url.pathname
-      );
-
-      if (
-        isPublicMedia ||
-        isPublicStatic ||
-        isInternalImageFile ||
-        isFrontendImageFile
-      ) {
-        return toFrontendImageFilePath(toSameOriginPath(url));
-      }
-
-      if (isSecureImageServe) {
-        return toFrontendImageFilePath(toSameOriginPath(url));
-      }
-    } catch {
-      return path;
-    }
-
     return path;
   }
 
