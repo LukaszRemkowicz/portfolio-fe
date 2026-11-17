@@ -3,9 +3,10 @@
   "moderate": true,
   "allowlist": [
     {
-      "GHSA-qwww-vcr4-c8h2": {
+      "GHSA-fc5q-39xc-vjpf": {
         "active": true,
-        "notes": "Only affects unstable React Server Components APIs; this application uses declarative BrowserRouter and StaticRouter."
+        "expiry": "2027-02-17",
+        "notes": "picomatch ReDoS; every published version (<=4.0.7) is affected, no fix exists. Only dev/build tooling uses it (jest, rollup, tinyglobby); it is not in the production dependency tree and never sees user input. Re-check by the expiry date."
       }
     }
   ]

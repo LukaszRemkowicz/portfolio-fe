@@ -38,4 +38,20 @@ describe('ImageWithFallback', () => {
 
     expect(screen.getByAltText('Modal image')).not.toHaveAttribute('src');
   });
+
+  it('calls onLoad once per src even with a new inline callback each render', () => {
+    const calls = jest.fn();
+    const { rerender } = render(
+      <ImageWithFallback src='/a.jpg' alt='x' onLoad={() => calls()} />
+    );
+    const img = screen.getByAltText('x') as HTMLImageElement;
+    Object.defineProperty(img, 'complete', { value: true });
+    Object.defineProperty(img, 'naturalWidth', { value: 10 });
+    rerender(<ImageWithFallback src='/b.jpg' alt='x' onLoad={() => calls()} />);
+    const after = calls.mock.calls.length;
+    rerender(<ImageWithFallback src='/b.jpg' alt='x' onLoad={() => calls()} />);
+    rerender(<ImageWithFallback src='/b.jpg' alt='x' onLoad={() => calls()} />);
+    expect(calls.mock.calls.length).toBe(after);
+    expect(after).toBe(1);
+  });
 });
