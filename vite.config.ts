@@ -29,6 +29,9 @@ export default defineConfig((): UserConfig => {
   const enablePwa = !disablePwaEnvironments.includes(appEnvironment);
 
   return {
+    // Docker dev (docker-compose.yml): the backend nginx blocks dot paths like
+    // /node_modules/.vite/, so the dep cache needs a dot-free directory there.
+    cacheDir: process.env.VITE_CACHE_DIR || undefined,
     esbuild: {
       target: 'es2022',
     },

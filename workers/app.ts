@@ -68,7 +68,11 @@ export default {
         cloudflare: { env, ctx },
       });
       status = response.status;
-      return withRequestId(response, requestId);
+      const res = withRequestId(response, requestId);
+      // Test copies (workers.dev) must not be indexed as duplicates of the real site.
+      if (env.ENVIRONMENT === 'staging')
+        res.headers.set('X-Robots-Tag', 'noindex');
+      return res;
     } catch (e) {
       error = e;
       throw e;

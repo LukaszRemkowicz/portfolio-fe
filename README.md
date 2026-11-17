@@ -28,6 +28,21 @@ The Worker reaches Django like the old in-network frontend did, through a Cloudf
 
 `MEDIA_ORIGIN` (optional) is for test deploys without an origin route, e.g. `*.workers.dev`: the Worker then serves `/media/*` from that origin. Leave it unset in production, where Workers routes send `/media/*` to the VPS.
 
+### Local stack (https://portfolio.local)
+
+`docker-compose.yml` runs the dev server in the backend repo's dev network under the hostname `fe`, which is where its local nginx sends `portfolio.local`; nginx also serves `admin.portfolio.local`. Worker vars come from `docker/dev.vars` (SSR goes straight to `http://be:8000`).
+
+```bash
+# backend repo (portfolio)
+doppler run -p portfolio -c dev -- docker compose up -d be
+# this repo
+docker compose up -d fe
+# backend repo again; nginx needs `fe` to resolve before it starts
+doppler run -p portfolio -c dev -- docker compose up -d nginx
+```
+
+`node_modules` lives in a Docker volume (Linux binaries); `npm ci` reruns when `package-lock.json` changes.
+
 ## Commands
 
 ```bash
@@ -50,7 +65,7 @@ Tip: `PLAYWRIGHT_CHANNEL=chrome npx playwright test` uses the installed Chrome. 
 
 ## Versioning and CI
 
-`VERSION` and `package.json` `version` must match (checked in CI). `.github/workflows/ci-cd.yml` runs lint/format/type-check, Jest with coverage, Playwright e2e, staging and production build + `wrangler deploy --dry-run`, Trivy and `audit-ci`. `.github/workflows/release.yml`: a new `VERSION` merged to `main` is tagged `v<VERSION>` and deployed to the `portfolio-fe-production` Worker (needs `CLOUDFLARE_API_TOKEN`, see `.github/SECRETS.md`).
+The version lives only in `package.json`. `.github/workflows/ci-cd.yml` runs lint/format/type-check, Jest with coverage, Playwright e2e, staging and production build + `wrangler deploy --dry-run`, Trivy and `audit-ci`. `.github/workflows/release.yml`: a new `package.json` version merged to `main` is tagged `v<version>` and deployed to the `portfolio-fe-production` Worker (needs `CLOUDFLARE_API_TOKEN`, see `.github/SECRETS.md`).
 
 ## Public routes
 
