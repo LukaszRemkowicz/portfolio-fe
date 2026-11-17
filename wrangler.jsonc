@@ -35,6 +35,18 @@
     "production": {
       "workers_dev": false,
       "vars": { "ENVIRONMENT": "production" }
+    },
+    // Test Worker (portfolio-fe-supabase on workers.dev) against the hidden
+    // Supabase API. SITE_DOMAIN/PROJECT_OWNER come from Doppler at deploy;
+    // SSR_API_URL and API_ORIGIN_SECRET are Worker secrets. No GA, no Sentry.
+    "supabase": {
+      "workers_dev": true,
+      "vars": {
+        "ENVIRONMENT": "staging",
+        "ENABLE_GA": "false",
+        "GA_TRACKING_ID": "",
+        "SENTRY_DSN_FE": ""
+      }
     }
   }
 }
