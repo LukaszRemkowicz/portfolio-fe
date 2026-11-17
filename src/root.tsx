@@ -11,7 +11,6 @@ import {
 import type { ShouldRevalidateFunction } from 'react-router';
 import {
   HydrationBoundary,
-  QueryClient,
   QueryClientProvider,
   dehydrate,
 } from '@tanstack/react-query';
@@ -32,6 +31,8 @@ import { createServerI18n } from './i18n.server';
 import { RequestOriginContext } from './context/RequestOriginContext';
 import { useGoogleAnalytics } from './hooks/useGoogleAnalytics';
 import { hasAnalyticsConsent } from './utils/analytics';
+import { captureError } from './utils/sentry';
+import { createAppQueryClient } from './utils/queryClient';
 import { getRequestLanguage, getRequestOrigin } from './utils/requestMeta';
 import { getOriginHeaders } from './server/originHeaders';
 import {
@@ -220,14 +221,7 @@ function AnalyticsTracker({ hasConsented }: { hasConsented: boolean }) {
 export default function Root({ loaderData }: Route.ComponentProps) {
   const { i18n } = useTranslation();
   const { revalidate } = useRevalidator();
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: { retry: 2, refetchOnWindowFocus: false },
-        },
-      })
-  );
+  const [queryClient] = useState(createAppQueryClient);
   const [hasConsented, setHasConsented] = useState(() => hasAnalyticsConsent());
 
   // On language change refetch server-translated data that is not keyed by
@@ -270,7 +264,10 @@ export default function Root({ loaderData }: Route.ComponentProps) {
             </AppErrorBoundary>
           </div>
           <ClientOnly>
-            <CookieConsent onAccept={() => setHasConsented(true)} />
+            <CookieConsent
+              onAccept={() => setHasConsented(true)}
+              onDecline={() => setHasConsented(false)}
+            />
           </ClientOnly>
         </HydrationBoundary>
       </RequestOriginContext.Provider>
@@ -280,6 +277,8 @@ export default function Root({ loaderData }: Route.ComponentProps) {
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   console.error('Uncaught error:', error);
+  // Render also runs during SSR; report only from the browser.
+  useEffect(() => captureError(error), [error]);
   return (
     <div className={`${styles.appContainer} ${styles.astroBg}`}>
       <ErrorFallback />

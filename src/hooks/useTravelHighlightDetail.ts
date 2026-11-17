@@ -33,9 +33,12 @@ export const fetchTravelHighlightDetail = async ({
   clientOrTransport?: AxiosInstance | DataTransport;
 }): Promise<TravelHighlightDetail> => {
   const transport = resolveDataTransport(clientOrTransport);
+  const path = [countrySlug, placeSlug, dateSlug]
+    .map(encodeURIComponent)
+    .join('/');
   const data = await transport.get<TravelHighlightDetail>({
-    browser: `${BFF_ROUTES.travelBySlug}${countrySlug}/${placeSlug}/${dateSlug}/`,
-    server: `${API_ROUTES.travelBySlug}${countrySlug}/${placeSlug}/${dateSlug}/`,
+    browser: `${BFF_ROUTES.travelBySlug}${path}/`,
+    server: `${API_ROUTES.travelBySlug}${path}/`,
   });
   if (!data || typeof data !== 'object') {
     throw new Error('Invalid API response structure');

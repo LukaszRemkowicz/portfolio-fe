@@ -115,6 +115,7 @@
     "sending": "Sending...",
     "success": "Thank you! Your message has been sent successfully.",
     "error": "Transmission failure. Please check your signal or try again later.",
+    "timeout": "The request took too long. Please try again in a moment.",
     "validationError": "One or more details in your inquiry require adjustment.",
     "errors": {
       "name": "Name must be at least 2 characters long.",

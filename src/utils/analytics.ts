@@ -61,7 +61,7 @@ export const loadGoogleAnalytics = () => {
  * Manually tracks a page view (Simplified for verification).
  */
 export const trackPageView = (path: string) => {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || !hasAnalyticsConsent()) return;
   // Pass-through if gtag exists, otherwise it hits the stub
   if (typeof window.gtag === 'function') {
     window.gtag('event', 'page_view', {
@@ -78,4 +78,31 @@ export const hasAnalyticsConsent = (): boolean => {
     return false;
   }
   return localStorage.getItem('cookieConsent') === 'true';
+};
+
+/** Cookie domains to try: current host and its registrable parent (best-effort: last two labels). */
+const cookieDomains = (hostname: string): string[] => {
+  const parts = hostname.split('.');
+  return parts.length > 2
+    ? [hostname, `.${parts.slice(-2).join('.')}`]
+    : [hostname, `.${hostname}`];
+};
+
+/** Withdraw analytics consent: deny gtag storage and expire GA cookies. */
+export const revokeAnalyticsConsent = () => {
+  if (typeof window === 'undefined') return;
+  if (typeof window.gtag === 'function') {
+    window.gtag('consent', 'update', { analytics_storage: 'denied' });
+  }
+  const names = document.cookie
+    .split(';')
+    .map(c => c.split('=')[0].trim())
+    .filter(n => n === '_ga' || n === '_gid' || n.startsWith('_ga_'));
+  const expired = 'expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+  for (const name of names) {
+    document.cookie = `${name}=; ${expired}`;
+    for (const domain of cookieDomains(window.location.hostname)) {
+      document.cookie = `${name}=; ${expired}; domain=${domain}`;
+    }
+  }
 };

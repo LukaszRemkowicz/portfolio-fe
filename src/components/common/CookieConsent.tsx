@@ -1,6 +1,8 @@
 import { Link } from 'react-router';
 import React, { useState, useEffect } from 'react';
 import { Cookie } from 'lucide-react';
+import { APP_ROUTES } from '../../api/constants';
+import { revokeAnalyticsConsent } from '../../utils/analytics';
 import styles from './CookieConsent.module.css';
 
 import { useTranslation } from 'react-i18next';
@@ -13,9 +15,13 @@ declare const window: WindowWithCookieSettings;
 
 interface CookieConsentProps {
   onAccept: () => void;
+  onDecline?: () => void;
 }
 
-const CookieConsent: React.FC<CookieConsentProps> = ({ onAccept }) => {
+const CookieConsent: React.FC<CookieConsentProps> = ({
+  onAccept,
+  onDecline,
+}) => {
   const { t } = useTranslation();
   const [showBanner, setShowBanner] = useState(false);
 
@@ -49,6 +55,8 @@ const CookieConsent: React.FC<CookieConsentProps> = ({ onAccept }) => {
 
   const declineCookies = () => {
     localStorage.setItem('cookieConsent', 'false');
+    revokeAnalyticsConsent();
+    onDecline?.();
     setShowBanner(false);
   };
 
@@ -65,7 +73,7 @@ const CookieConsent: React.FC<CookieConsentProps> = ({ onAccept }) => {
             <h4 className={styles.title}>{t('cookie.title')}</h4>
             <p className={styles.description}>
               {t('cookie.description')}{' '}
-              <Link to='/privacy-policy' className={styles.learnMore}>
+              <Link to={APP_ROUTES.PRIVACY} className={styles.learnMore}>
                 {t('common.privacyPolicy')}
               </Link>
               .

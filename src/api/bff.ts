@@ -103,7 +103,7 @@ export const postBffJson = async <TResponse>(
   urlWithLang.searchParams.set('lang', lang);
 
   const controller = new AbortController();
-  const timeoutMs = options.timeoutMs ?? 1500;
+  const timeoutMs = options.timeoutMs ?? 15000; // only caller is the contact form (writes can be slow on a cold Edge Function)
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {

@@ -184,4 +184,39 @@ describe('route loaders', () => {
       })[0]
     ).toEqual({ title: 'T' });
   });
+
+  it.each(['..%2Fsettings', '..', '.', 'a%3Fb', 'a/b', '..%2f'])(
+    'detail loaders 404 without fetching for unsafe param %s',
+    async bad => {
+      const astro = await run(astroDetailLoader, '/astrophotography/x', {
+        slug: bad,
+      });
+      const travel = await run(travelLoader, '/travel/x/y/z', {
+        countrySlug: 'spain',
+        placeSlug: bad,
+        dateSlug: 'aug2026',
+      });
+      expect(status(astro)).toBe(404);
+      expect(status(travel)).toBe(404);
+      expect(fetchAstroImageDetail).not.toHaveBeenCalled();
+      expect(fetchTravelHighlightDetail).not.toHaveBeenCalled();
+    }
+  );
+
+  it('detail loaders still fetch valid slugs', async () => {
+    (fetchAstroImageDetail as jest.Mock).mockResolvedValueOnce({ name: 'M31' });
+    (fetchTravelHighlightDetail as jest.Mock).mockResolvedValueOnce({
+      full_location: 'Spain',
+    });
+    await run(astroDetailLoader, '/astrophotography/m31-final_2', {
+      slug: 'm31-final_2',
+    });
+    await run(travelLoader, '/travel/spain/zafra/aug2026', {
+      countrySlug: 'spain',
+      placeSlug: 'castillo-de-zafra',
+      dateSlug: 'aug2026',
+    });
+    expect(fetchAstroImageDetail).toHaveBeenCalledTimes(1);
+    expect(fetchTravelHighlightDetail).toHaveBeenCalledTimes(1);
+  });
 });

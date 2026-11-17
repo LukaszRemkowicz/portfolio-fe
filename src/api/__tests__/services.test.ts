@@ -6,6 +6,7 @@ import {
   fetchTravelHighlights,
   fetchShopProducts,
   fetchContact,
+  fetchAstroImageDetail,
   fetchSettings,
 } from '../services';
 import { API_ROUTES, BFF_ROUTES } from '../routes';
@@ -34,6 +35,19 @@ describe('API Services', () => {
   afterEach(() => {
     jest.clearAllMocks();
     delete (global as { fetch?: typeof fetch }).fetch;
+  });
+
+  describe('fetchAstroImageDetail', () => {
+    it('encodes the slug in the path', async () => {
+      fetchMock.mockResolvedValue({
+        ok: true,
+        json: async () => ({ slug: 'x' }),
+      });
+      await fetchAstroImageDetail('..%2Fsettings');
+      expect(String(fetchMock.mock.calls[0][0])).toContain(
+        '/app/astroimages/..%252Fsettings/'
+      );
+    });
   });
 
   describe('fetchProfile', () => {

@@ -115,6 +115,7 @@
     "sending": "Wysyłanie...",
     "success": "Dziękujemy! Twoja wiadomość została wysłana pomyślnie.",
     "error": "Błąd transmisji. Sprawdź sygnał lub spróbuj ponownie później.",
+    "timeout": "Żądanie trwało zbyt długo. Spróbuj ponownie za chwilę.",
     "validationError": "Jedna lub więcej szczegółów zapytania wymaga korekty.",
     "errors": {
       "name": "Imię musi mieć co najmniej 2 znaki.",

@@ -43,6 +43,7 @@ describe('Google Analytics Utility', () => {
   });
 
   test('trackPageView captures events in dataLayer via gtag stub', () => {
+    localStorage.setItem('cookieConsent', 'true');
     analytics.loadGoogleAnalytics();
     const path = '/home';
 

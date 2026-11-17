@@ -160,8 +160,8 @@ export const fetchAstroImageDetail = async (
 ): Promise<AstroImage> => {
   const transport = resolveDataTransport(clientOrTransport);
   const data = await transport.get<AstroImage>({
-    browser: `${BFF_ROUTES.astroImages}${slug}/`,
-    server: `${API_ROUTES.astroImages}${slug}/`,
+    browser: `${BFF_ROUTES.astroImages}${encodeURIComponent(slug)}/`,
+    server: `${API_ROUTES.astroImages}${encodeURIComponent(slug)}/`,
   });
   if (data) {
     return normalizeAstroImage(data);

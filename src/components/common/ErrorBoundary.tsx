@@ -1,4 +1,5 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
+import { captureError } from '../../utils/sentry';
 import styles from '../../styles/components/ErrorBoundary.module.css';
 
 interface Props {
@@ -40,6 +41,7 @@ class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Uncaught error:', error, errorInfo);
+    captureError(error);
   }
 
   public render() {
