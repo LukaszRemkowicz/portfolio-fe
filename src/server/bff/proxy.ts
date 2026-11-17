@@ -20,7 +20,7 @@ const jsonResponse = (status: number, body: unknown, headers = {}) =>
   });
 
 /** Backend base URL for server-side requests (read lazily: Workers env). */
-function getBackendBaseUrl(requestOrigin: string): string {
+export function getBackendBaseUrl(requestOrigin: string): string {
   return (
     process.env.SSR_API_URL ||
     resolvePublicEnv({
@@ -35,7 +35,7 @@ function getBackendBaseUrl(requestOrigin: string): string {
  * Host override), language, request id
  * plus origin headers (visitor IP, Cloudflare Access token).
  */
-function getBackendHeaders(
+export function getBackendHeaders(
   request: Request,
   requestOrigin: string,
   requestId: string
