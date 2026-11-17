@@ -10,6 +10,6 @@ jobs:
   version-check:
     uses: LukaszRemkowicz/ci-cd/.github/workflows/version-check.yml@main
     with:
-      version_file: VERSION
+      version_file: package.json
       base_branch: main
       head_branch: dev

@@ -7,7 +7,7 @@ Repo-level first-stop guide for agents working on the portfolio frontend.
 - Do not commit or push without explicit user permission.
 - Never deploy manually (no `wrangler deploy` without `--dry-run`); production deploys run only from `release.yml` after a version merge to `main`.
 - Do not change BFF/API contracts (`/app/*`, backend `/v1/*` usage) or SEO output (meta, canonical, robots, sitemap links) without agreement.
-- Keep `VERSION` and `package.json` `version` identical when bumping.
+- The version lives only in `package.json` (`version`); there is no `VERSION` file.
 
 ## Architecture
 
