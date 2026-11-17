@@ -1,96 +1,113 @@
-import { api } from '../api/api';
-import { AppError, ValidationError, NetworkError } from '../api/errors';
-import { AxiosError, InternalAxiosRequestConfig } from 'axios';
+/** @jest-environment node */
+import { createApiClient } from '../api/api';
+import {
+  AppError,
+  NetworkError,
+  NotFoundError,
+  ServerError,
+  UnauthorizedError,
+  ValidationError,
+} from '../api/errors';
 
-// Helper to create a mocked AxiosError
-const createAxiosError = (status: number, data: unknown): AxiosError => {
-  return {
-    isAxiosError: true,
-    name: 'AxiosError',
-    message: 'Request failed',
-    config: {} as InternalAxiosRequestConfig,
-    response: {
-      status,
-      data,
-      statusText: 'Error',
-      headers: {},
-      config: {} as InternalAxiosRequestConfig,
-    },
-    toJSON: () => ({}),
-  } as AxiosError;
-};
+const respond = (status: number, body: unknown, extra: object = {}) =>
+  ({
+    status,
+    ok: status >= 200 && status < 300,
+    type: 'basic',
+    json: async () => body,
+    ...extra,
+  }) as unknown as Response;
 
-describe('API Interceptor', () => {
-  let errorHandler: (error: AxiosError) => unknown;
+describe('API client (fetch) error mapping and transport', () => {
+  let fetchMock: jest.Mock;
+  const client = () =>
+    createApiClient(() => 'pl-PL', 'https://site.test', 'rid');
 
-  beforeAll(() => {
-    // Extract the error handler from the interceptor
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const interceptor = (api.interceptors.response as any).handlers[0];
-    errorHandler = interceptor.rejected;
+  beforeEach(() => {
+    fetchMock = jest.fn();
+    global.fetch = fetchMock as unknown as typeof fetch;
+    jest.spyOn(console, 'log').mockImplementation(() => undefined);
   });
+  afterEach(() => jest.restoreAllMocks());
 
-  it("extracts 'detail' from 400 Validation Errors", async () => {
-    const error = createAxiosError(400, { detail: 'Invalid input provided.' });
-
-    try {
-      errorHandler(error);
-    } catch (e: unknown) {
-      expect(e).toBeInstanceOf(ValidationError);
-      expect((e as ValidationError).message).toBe('Invalid input provided.');
-    }
-  });
-
-  it("extracts 'detail' from 429 Throttling Errors", async () => {
-    const error = createAxiosError(429, {
-      detail: 'Too many messages. Wait 1 hour.',
+  it('returns data and sends lang, params, headers and manual redirects', async () => {
+    fetchMock.mockResolvedValue(respond(200, { ok: true }));
+    const result = await client().get('/v1/images', {
+      params: { page: 2, tag: undefined },
     });
-
-    try {
-      errorHandler(error);
-    } catch (e: unknown) {
-      expect(e).toBeInstanceOf(AppError);
-      expect((e as AppError).statusCode).toBe(429);
-      expect((e as AppError).message).toBe('Too many messages. Wait 1 hour.');
-    }
-  });
-
-  it("prefers 'message' over 'detail' if both exist", async () => {
-    const error = createAxiosError(400, {
-      message: 'Explicit message',
-      detail: 'Hidden detail',
+    expect(result.data).toEqual({ ok: true });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toContain('/v1/images?');
+    expect(new URL(url).searchParams.get('lang')).toBe('pl');
+    expect(new URL(url).searchParams.get('page')).toBe('2');
+    expect(new URL(url).searchParams.has('tag')).toBe(false);
+    expect(init.redirect).toBe('manual');
+    expect(init.headers).toMatchObject({
+      Accept: 'application/json',
+      'X-Request-ID': 'rid',
+      'X-Forwarded-Host': 'site.test',
+      'X-Forwarded-Proto': 'https',
     });
-
-    try {
-      errorHandler(error);
-    } catch (e: unknown) {
-      expect((e as Error).message).toBe('Explicit message');
-    }
   });
 
-  it('handles network errors (no response)', async () => {
-    const error = {
-      isAxiosError: true,
-      config: {},
-      response: undefined,
-    } as AxiosError;
-
-    try {
-      errorHandler(error);
-    } catch (e: unknown) {
-      expect(e).toBeInstanceOf(NetworkError);
-    }
+  it('treats a 3xx response as an error instead of following it', async () => {
+    fetchMock.mockResolvedValue(respond(302, null));
+    await expect(client().get('/v1/x')).rejects.toMatchObject({
+      statusCode: 302,
+    });
   });
 
-  it('handles fallback for unknown status codes', async () => {
-    const error = createAxiosError(418, {}); // I'm a teapot
+  it.each([
+    [
+      400,
+      { detail: 'Invalid input provided.' },
+      ValidationError,
+      'Invalid input provided.',
+    ],
+    [
+      400,
+      { message: 'Explicit', detail: 'Hidden' },
+      ValidationError,
+      'Explicit',
+    ],
+    [401, {}, UnauthorizedError, undefined],
+    [404, {}, NotFoundError, undefined],
+    [503, {}, ServerError, undefined],
+    [
+      429,
+      { detail: 'Too many messages. Wait 1 hour.' },
+      AppError,
+      'Too many messages. Wait 1 hour.',
+    ],
+    [418, {}, AppError, 'An unexpected error occurred.'],
+  ])('maps %s to the matching error class', async (status, body, cls, msg) => {
+    fetchMock.mockResolvedValue(respond(status, body));
+    const error = await client()
+      .get('/v1/x')
+      .catch(e => e);
+    expect(error).toBeInstanceOf(cls);
+    expect(error.statusCode).toBe(status);
+    if (msg) expect(error.message).toBe(msg);
+  });
 
-    try {
-      errorHandler(error);
-    } catch (e: unknown) {
-      expect(e).toBeInstanceOf(AppError);
-      expect((e as AppError).statusCode).toBe(418);
-      expect((e as AppError).message).toBe('An unexpected error occurred.');
-    }
+  it('maps network failures and timeouts to NetworkError', async () => {
+    fetchMock.mockRejectedValueOnce(new TypeError('fetch failed'));
+    await expect(client().get('/v1/x')).rejects.toBeInstanceOf(NetworkError);
+
+    jest.useFakeTimers();
+    fetchMock.mockImplementationOnce(
+      (_url: string, init: RequestInit) =>
+        new Promise((_resolve, reject) =>
+          init.signal?.addEventListener('abort', () =>
+            reject(new DOMException('aborted', 'AbortError'))
+          )
+        )
+    );
+    const pending = client()
+      .get('/v1/x')
+      .catch(e => e);
+    await jest.advanceTimersByTimeAsync(8000);
+    expect(await pending).toBeInstanceOf(NetworkError);
+    jest.useRealTimers();
   });
 });

@@ -5,7 +5,7 @@ import { API_ROUTES, BFF_ROUTES } from '../api/routes';
 import { normalizeAstroImages } from '../api/media';
 import { DataTransport, resolveDataTransport } from '../api/transport';
 import { AstroImage } from '../types';
-import type { AxiosInstance } from 'axios';
+import type { ApiClient } from '../api/api';
 
 export interface ExtendedAstroImage extends AstroImage {
   url?: string;
@@ -30,12 +30,15 @@ export const fetchTravelHighlightDetail = async ({
   countrySlug: string;
   placeSlug: string;
   dateSlug: string;
-  clientOrTransport?: AxiosInstance | DataTransport;
+  clientOrTransport?: ApiClient | DataTransport;
 }): Promise<TravelHighlightDetail> => {
   const transport = resolveDataTransport(clientOrTransport);
+  const path = [countrySlug, placeSlug, dateSlug]
+    .map(encodeURIComponent)
+    .join('/');
   const data = await transport.get<TravelHighlightDetail>({
-    browser: `${BFF_ROUTES.travelBySlug}${countrySlug}/${placeSlug}/${dateSlug}/`,
-    server: `${API_ROUTES.travelBySlug}${countrySlug}/${placeSlug}/${dateSlug}/`,
+    browser: `${BFF_ROUTES.travelBySlug}${path}/`,
+    server: `${API_ROUTES.travelBySlug}${path}/`,
   });
   if (!data || typeof data !== 'object') {
     throw new Error('Invalid API response structure');

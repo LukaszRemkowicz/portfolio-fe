@@ -199,4 +199,28 @@ describe('handleBffRequest', () => {
     const response = await call('/app/settings/');
     expect(response.status).toBe(500);
   });
+
+  it('returns 504 JSON when the upstream times out and sets signal + manual redirect', async () => {
+    upstream.mockRejectedValue(new DOMException('timeout', 'TimeoutError'));
+    const response = await call('/app/settings/');
+    expect(response.status).toBe(504);
+    expect(await response.json()).toEqual({
+      message: 'Upstream request timed out.',
+    });
+    const init = upstream.mock.calls[0][1];
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+    expect(init.redirect).toBe('manual');
+  });
+
+  it('returns 502 and does not forward an upstream redirect', async () => {
+    upstream.mockResolvedValue(
+      new Response(null, {
+        status: 302,
+        headers: { Location: 'https://evil.example/' },
+      })
+    );
+    const response = await call('/app/settings/');
+    expect(response.status).toBe(502);
+    expect(response.headers.get('location')).toBeNull();
+  });
 });

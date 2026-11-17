@@ -46,16 +46,26 @@ describe('getOriginHeaders', () => {
 });
 
 describe('createApiClient on the server (SSR loaders)', () => {
-  it('sends origin headers with every backend request', () => {
+  it('sends origin headers with every backend request', async () => {
     process.env.CF_ACCESS_CLIENT_ID = 'id.access';
     process.env.CF_ACCESS_CLIENT_SECRET = 's3cret';
+    const fetchMock = jest.fn().mockResolvedValue({
+      status: 200,
+      ok: true,
+      type: 'basic',
+      json: async () => ({}),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+    jest.spyOn(console, 'log').mockImplementation(() => undefined);
+
     const client = createApiClient(
       () => 'en',
       'https://portfolio.local',
       'req-1',
       getOriginHeaders(req({ 'cf-connecting-ip': '1.2.3.4' }))
     );
-    expect(client.defaults.headers).toMatchObject({
+    await client.get('/v1/settings');
+    expect(fetchMock.mock.calls[0][1].headers).toMatchObject({
       'X-Request-ID': 'req-1',
       'X-Real-IP': '1.2.3.4',
       'CF-Access-Client-Id': 'id.access',

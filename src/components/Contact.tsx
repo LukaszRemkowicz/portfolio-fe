@@ -102,7 +102,15 @@ const Contact: React.FC = () => {
           setSubmitStatus('validation_error');
         } else if (error instanceof AppError) {
           setSubmitStatus('error');
-          setServerError(error.message);
+          // 408 = client abort; 5xx messages are English server text. Other 4xx keep the server message.
+          const { statusCode } = error;
+          setServerError(
+            statusCode === 408
+              ? t('contact.timeout')
+              : statusCode === undefined || statusCode >= 500
+                ? t('contact.error')
+                : error.message
+          );
           console.error(`Status code ${error.statusCode}: ${error.message}`);
         } else {
           console.error('Unknown error:', error);

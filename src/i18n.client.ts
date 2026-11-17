@@ -6,8 +6,10 @@
 
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import HttpApi from 'i18next-http-backend';
 import LanguageDetector from 'i18next-browser-languagedetector';
+// Bundled (same JSON as the server) so hydration never waits on a network fetch.
+import en from '../public/locales/en/translation.json';
+import pl from '../public/locales/pl/translation.json';
 
 declare global {
   interface Window {
@@ -29,11 +31,14 @@ const initialLanguage =
     : undefined;
 
 export const i18nReady = i18n
-  .use(HttpApi)
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     lng: initialLanguage, // If set by SSR, i18next uses this first
+    resources: {
+      en: { translation: en },
+      pl: { translation: pl },
+    },
     fallbackLng: 'en',
     supportedLngs: ['en', 'pl'],
     detection: {
@@ -49,9 +54,6 @@ export const i18nReady = i18n
     debug: false,
     interpolation: {
       escapeValue: false,
-    },
-    backend: {
-      loadPath: '/locales/{{lng}}/{{ns}}.json',
     },
   });
 

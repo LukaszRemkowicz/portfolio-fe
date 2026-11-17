@@ -1,5 +1,5 @@
 // frontend/src/components/Navbar.tsx
-import { type FC, useState } from 'react';
+import { type FC, useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router';
 import Logo from './common/Logo';
 import styles from '../styles/components/Navbar.module.css';
@@ -14,13 +14,25 @@ import { useTranslation } from 'react-i18next';
 
 const Navbar: FC<NavbarProps> = ({ transparent: _transparent }) => {
   const { t } = useTranslation();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  // The drawer is open only for the history entry it was opened on, so any
+  // navigation (link, Back/Forward) closes it without an effect.
+  const [menuOpenedAt, setMenuOpenedAt] = useState<string | null>(null);
+  const isMenuOpen = menuOpenedAt === location.key;
   const { isEnabled } = useFeatureFlags();
   const isProgrammingEnabled = isEnabled('programming');
   const isShopEnabled = isEnabled('shop');
 
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const toggleMenu = () => setMenuOpenedAt(isMenuOpen ? null : location.key);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuOpenedAt(null);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isMenuOpen]);
 
   return (
     <>
@@ -97,7 +109,7 @@ const Navbar: FC<NavbarProps> = ({ transparent: _transparent }) => {
             <button
               className={styles.menuTrigger}
               onClick={toggleMenu}
-              aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-label={isMenuOpen ? t('a11y.closeMenu') : t('a11y.openMenu')}
               aria-expanded={isMenuOpen}
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}

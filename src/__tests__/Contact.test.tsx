@@ -170,4 +170,18 @@ describe('Contact Component', () => {
       await screen.findByText(/Server says name is too short./i)
     ).toBeInTheDocument();
   });
+
+  it('shows the translated message on timeout (408)', async () => {
+    (useSettings as jest.Mock).mockReturnValue({ data: { contactForm: true } });
+    mockFetchContact.mockRejectedValue(new AppError('The request took', 408));
+    render(<Contact />);
+    const type = (ph: string, value: string) =>
+      fireEvent.change(screen.getByPlaceholderText(ph), { target: { value } });
+    type('contact.namePlaceholder', 'John Doe');
+    type('contact.emailPlaceholder', 'john@example.com');
+    type('contact.subjectPlaceholder', 'Hello There');
+    type('contact.messagePlaceholder', 'This is a long message for testing.');
+    fireEvent.click(screen.getByRole('button', { name: 'contact.submit' }));
+    expect(await screen.findByText('contact.timeout')).toBeInTheDocument();
+  });
 });

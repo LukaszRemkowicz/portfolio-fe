@@ -16,6 +16,7 @@ import {
 } from '../utils/loaderData';
 import { NOT_FOUND_SEO, routeMeta } from '../seo/buildMeta';
 import type { RouteSeo } from '../seo/buildMeta';
+import { isSafeSlug } from '../utils/slug';
 import { stripHtml, truncateText } from '../utils/html';
 import type { AstroImage } from '../types';
 
@@ -27,14 +28,17 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const slug = params.slug;
   const queryClient = createLoaderQueryClient();
 
-  const { data: image, notFound } = await fetchQueryOrNotFound<AstroImage>(
-    queryClient,
-    {
-      queryKey: getAstroImageQueryKey(language, slug),
-      queryFn: () => fetchAstroImageDetail(slug, client),
-    },
-    error => error instanceof NotFoundError
-  );
+  // Unsafe slugs (e.g. `..%2Fsettings`) never reach the upstream path.
+  const { data: image, notFound } = isSafeSlug(slug)
+    ? await fetchQueryOrNotFound<AstroImage>(
+        queryClient,
+        {
+          queryKey: getAstroImageQueryKey(language, slug),
+          queryFn: () => fetchAstroImageDetail(slug, client),
+        },
+        error => error instanceof NotFoundError
+      )
+    : { data: null, notFound: true };
 
   if (notFound) {
     // Same flag the UI already reads to render NotFoundPage.

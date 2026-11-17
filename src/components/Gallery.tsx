@@ -29,7 +29,7 @@ const Gallery: React.FC = () => {
     features?.lastimages !== false
   );
 
-  const error = queryError ? 'Failed to load latest images.' : null;
+  const error = queryError ? t('errors.latestImages') : null;
   const images = useMemo(
     () => (Array.isArray(imagesData) ? imagesData : []),
     [imagesData]

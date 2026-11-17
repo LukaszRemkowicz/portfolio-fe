@@ -554,7 +554,7 @@ describe('AstroGallery Component', () => {
     });
   });
 
-  it('restores the previous gallery scroll position when closing a gallery modal', async () => {
+  it('keeps the gallery scroll position when opening and closing a gallery modal (no manual scroll)', async () => {
     const mockImages: AstroImage[] = [
       {
         pk: '1',
@@ -625,12 +625,9 @@ describe('AstroGallery Component', () => {
       );
     });
 
-    await waitFor(() => {
-      expect(scrollToSpy).toHaveBeenCalledWith({
-        top: 860,
-        behavior: 'auto',
-      });
-    });
+    // The modal is a child route navigated with preventScrollReset; the page
+    // is never scrolled programmatically.
+    expect(scrollToSpy).not.toHaveBeenCalled();
 
     scrollToSpy.mockRestore();
   });

@@ -1,5 +1,4 @@
-import type { AxiosInstance, AxiosResponse } from 'axios';
-import { api } from './api';
+import { api, type ApiClient } from './api';
 import { fetchBffJson, isBrowserDefaultClient, postBffJson } from './bff';
 
 type RouteTargets = {
@@ -17,8 +16,8 @@ export type DataTransport = {
   post<T>(routes: RouteTargets, body: unknown): Promise<T>;
 };
 
-/** Validate Axios responses and return the payload shape expected by callers. */
-export const handleAxiosResponse = <T>(response: AxiosResponse<T>): T => {
+/** Validate client responses and return the payload shape expected by callers. */
+export const handleResponse = <T>(response: { data: T }): T => {
   if (response && response.data !== undefined) {
     return response.data;
   }
@@ -52,8 +51,8 @@ export const browserTransport: DataTransport = {
   },
 };
 
-export const createAxiosTransport = (
-  client: AxiosInstance = api
+export const createServerTransport = (
+  client: ApiClient = api
 ): DataTransport => ({
   __dataTransport: true,
   kind: 'server',
@@ -62,16 +61,16 @@ export const createAxiosTransport = (
       params && Object.keys(params).length > 0
         ? await client.get<T>(routes.server, { params })
         : await client.get<T>(routes.server);
-    return handleAxiosResponse(response);
+    return handleResponse(response);
   },
   async post<T>(routes: RouteTargets, body: unknown) {
     const response = await client.post<T>(routes.server, body);
-    return handleAxiosResponse(response);
+    return handleResponse(response);
   },
 });
 
 export const resolveDataTransport = (
-  clientOrTransport: AxiosInstance | DataTransport = api
+  clientOrTransport: ApiClient | DataTransport = api
 ): DataTransport => {
   if (
     typeof clientOrTransport === 'object' &&
@@ -81,7 +80,7 @@ export const resolveDataTransport = (
     return clientOrTransport as DataTransport;
   }
 
-  return isBrowserDefaultClient(clientOrTransport as AxiosInstance)
+  return isBrowserDefaultClient(clientOrTransport as ApiClient)
     ? browserTransport
-    : createAxiosTransport(clientOrTransport as AxiosInstance);
+    : createServerTransport(clientOrTransport as ApiClient);
 };

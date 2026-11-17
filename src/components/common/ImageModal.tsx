@@ -36,7 +36,7 @@ const ImageModalContent: FC<ImageModalProps> = ({ image, onClose }) => {
     () => false
   );
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const { data: activeImageDetail, isLoading: isActiveImageLoading } =
     useAstroImageDetail(image?.slug || null);
@@ -307,7 +307,7 @@ const ImageModalContent: FC<ImageModalProps> = ({ image, onClose }) => {
         <button
           className={styles.modalClose}
           onClick={onClose}
-          aria-label='Close modal'
+          aria-label={t('a11y.closeModal')}
         >
           <X size={24} />
         </button>
@@ -410,6 +410,7 @@ const ImageModalContent: FC<ImageModalProps> = ({ image, onClose }) => {
                       day: 'numeric',
                       month: 'short',
                       year: 'numeric',
+                      timeZone: 'UTC',
                     }
                   )}
                 </span>

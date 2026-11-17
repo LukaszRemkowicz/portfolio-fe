@@ -7,7 +7,7 @@ import { MainPageLocation } from '../types';
 import { useSettings } from '../hooks/useSettings';
 import { useTravelHighlights } from '../hooks/useTravelHighlights';
 import { stripHtml } from '../utils/html';
-import { getDateSlug } from '../utils/date';
+import { getDateSlug, useIsRecent } from '../utils/date';
 import { APP_ROUTES, DEFAULT_TRAVEL_IMAGE } from '../api/constants';
 import { useTranslation } from 'react-i18next';
 import ImageWithFallback from './common/ImageWithFallback';
@@ -84,18 +84,8 @@ const TravelCard: FC<{
       : `Explore the cosmic wonders of ${displayLocation}.`;
   }, [location.story, location.images, displayLocation]);
 
-  // Check if the location is "new" (created within last 14 days)
-  const isNew = useMemo(() => {
-    if (!location.created_at) return false;
-    try {
-      const createdAtDate = new Date(location.created_at);
-      const fourteenDaysAgo = new Date();
-      fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-      return createdAtDate > fourteenDaysAgo;
-    } catch {
-      return false;
-    }
-  }, [location.created_at]);
+  // "New" = created within the last 14 days (client-evaluated, see useIsRecent)
+  const isNew = useIsRecent(location.created_at, 14);
 
   const handleCardClick = () => {
     // Generate the required date slug using the actual raw date range.
