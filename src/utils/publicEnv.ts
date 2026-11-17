@@ -6,7 +6,6 @@
  *
  * - `window.__PUBLIC_ENV__` in the browser
  * - `process.env` on the server
- * - `import.meta.env` during Vite build time
  *
  * `SITE_DOMAIN` and `PROJECT_OWNER` stay defined in one place.
  */
@@ -36,24 +35,10 @@ function readProcessEnv(key: string): string {
 }
 
 /**
- * Read a public env key from Vite build-time environment variables.
- */
-function readViteEnv(key: string): string {
-  try {
-    const viteEnv = Function('return import.meta?.env')();
-    return viteEnv?.[`VITE_${key}`] || '';
-  } catch {
-    return '';
-  }
-}
-
-/**
- * Resolve a public env key from browser, process, or Vite env sources.
+ * Resolve a public env key from browser or process env sources.
  */
 function readPublicEnv(key: keyof PublicEnvSchema, fallback = ''): string {
-  return (
-    getWindowEnv()?.[key] || readProcessEnv(key) || readViteEnv(key) || fallback
-  );
+  return getWindowEnv()?.[key] || readProcessEnv(key) || fallback;
 }
 
 /**

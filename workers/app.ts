@@ -2,6 +2,7 @@ import { createRequestHandler } from 'react-router';
 import { withRequestId } from '../src/server/withRequestId';
 import { isMalformedRequestTarget } from '../src/server/requestTarget';
 import { getMediaPassthroughUrl } from '../src/server/mediaPassthrough';
+import { withSecurityHeaders } from '../src/server/securityHeaders';
 import { exposeEnvToProcess } from '../src/server/exposeEnvToProcess';
 
 declare module 'react-router' {
@@ -45,20 +46,24 @@ export default {
           status: 400,
         })
       );
-      return new Response('Bad Request', {
-        status: 400,
-        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-      });
+      return withSecurityHeaders(
+        new Response('Bad Request', {
+          status: 400,
+          headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+        })
+      );
     }
     const mediaUrl =
       request.method === 'GET' || request.method === 'HEAD'
         ? getMediaPassthroughUrl(request.url, env.MEDIA_ORIGIN)
         : null;
     if (mediaUrl) {
-      return fetch(mediaUrl, {
-        method: request.method,
-        headers: { Accept: request.headers.get('accept') || '*/*' },
-      });
+      return withSecurityHeaders(
+        await fetch(mediaUrl, {
+          method: request.method,
+          headers: { Accept: request.headers.get('accept') || '*/*' },
+        })
+      );
     }
     let status = 500;
     let error: unknown;
@@ -68,7 +73,7 @@ export default {
         cloudflare: { env, ctx },
       });
       status = response.status;
-      const res = withRequestId(response, requestId);
+      const res = withSecurityHeaders(withRequestId(response, requestId));
       // Test copies (workers.dev) must not be indexed as duplicates of the real site.
       if (env.ENVIRONMENT === 'staging')
         res.headers.set('X-Robots-Tag', 'noindex');
