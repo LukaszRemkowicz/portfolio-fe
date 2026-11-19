@@ -45,21 +45,27 @@
   color: #f8fafc;
 }
 
+/* Flex, not grid, so a lone card or a partial last row sits centered. */
 .grid {
-  display: grid;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 2.5rem;
 }
 
+.grid > * {
+  flex: 0 1 100%;
+}
+
 @media (min-width: 768px) {
-  .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .grid > * {
+    flex-basis: calc((100% - 2.5rem) / 2);
   }
 }
 
 @media (min-width: 1024px) {
-  .grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .grid > * {
+    flex-basis: calc((100% - 5rem) / 3);
   }
 }
 
@@ -73,7 +79,6 @@
   flex-direction: column;
   transition: all var(--transition-normal);
   text-decoration: none;
-  height: 100%;
 }
 
 .projectCard:hover {
@@ -84,7 +89,7 @@
 
 .imageWrapper {
   position: relative;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 16 / 10;
   overflow: hidden;
 }
 
@@ -136,6 +141,38 @@
   font-size: 0.75rem;
   font-weight: 500;
   border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+.priceBadge {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 2;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.priceFree {
+  color: #6ee7b7;
+  background:
+    linear-gradient(rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.15)),
+    rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(110, 231, 183, 0.35);
+}
+
+.pricePaid {
+  color: var(--celestial-blue);
+  background:
+    linear-gradient(rgba(56, 189, 248, 0.15), rgba(56, 189, 248, 0.15)),
+    rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(56, 189, 248, 0.35);
 }
 
 .cardActions {

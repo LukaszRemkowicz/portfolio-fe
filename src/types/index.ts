@@ -135,25 +135,25 @@ export type SubmitStatus =
   | 'error'
   | null;
 
-export interface ProjectImage {
-  pk: number;
-  url: string;
-  thumbnail_url?: string;
-  is_cover: boolean;
-  name: string;
-}
+export type PriceTag =
+  | { type: 'free' }
+  | { type: 'paid'; amount: string; currency: string };
 
 export interface Project {
-  pk: number;
+  id: string;
   name: string;
   description: string;
-  technologies: string;
-  technologies_list: string[];
+  technologies: string[];
   github_url?: string;
   live_url?: string;
-  images: ProjectImage[];
   created_at: string;
-  updated_at: string;
+  price_tag?: PriceTag | null;
+  fallback_image?: ImageVariantCandidate | null;
+  variants?: ImageVariantsByRole;
+}
+
+export interface ProjectsResponse {
+  projects: Project[];
 }
 
 export interface ShopProduct {

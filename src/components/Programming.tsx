@@ -5,31 +5,56 @@ import { useProjects } from '../hooks/useProjects';
 import styles from '../styles/components/Programming.module.css';
 import { Github, ExternalLink, Code2 } from 'lucide-react';
 import ProjectSkeleton from './skeletons/ProjectSkeleton';
-import ImageWithFallback from './common/ImageWithFallback';
-import { Project, ProjectImage } from '../types';
+import { Project } from '../types';
+import { sanitizeHtml } from '../utils/html';
+import { buildResponsiveImageProps } from '../utils/imageVariants';
 import StarBackground from './StarBackground';
 
 const ProjectCard: FC<{ project: Project }> = ({ project }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [hasError, setHasError] = useState(false);
-  const coverImage =
-    project.images.find((img: ProjectImage) => img.is_cover) ||
-    project.images[0];
+
+  const price = project.price_tag;
+  const priceLabel =
+    price?.type === 'free'
+      ? t('programming.priceFree')
+      : price?.type === 'paid'
+        ? new Intl.NumberFormat(i18n.language, {
+            style: 'currency',
+            currency: price.currency,
+          }).format(Number(price.amount))
+        : null;
 
   return (
     <article className={styles.projectCard}>
       <div className={styles.imageWrapper}>
-        {coverImage ? (
-          <ImageWithFallback
-            src={coverImage.url}
+        {project.fallback_image?.url ? (
+          <img
+            {...buildResponsiveImageProps({
+              variants: project.variants,
+              role: 'thumbnail',
+              fallbackSrc: project.fallback_image.url,
+              sizes: '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw',
+            })}
             alt={project.name}
             className={styles.cardImage}
+            loading='lazy'
+            decoding='async'
             onError={() => setHasError(true)}
           />
         ) : (
           <div className={styles.imagePlaceholder}>
             <Code2 size={48} className={styles.placeholderIcon} />
           </div>
+        )}
+        {priceLabel && (
+          <span
+            className={`${styles.priceBadge} ${
+              price?.type === 'free' ? styles.priceFree : styles.pricePaid
+            }`}
+          >
+            {priceLabel}
+          </span>
         )}
         {hasError && (
           <div className={styles.placeholderOverlay}>
@@ -40,10 +65,15 @@ const ProjectCard: FC<{ project: Project }> = ({ project }) => {
 
       <div className={styles.cardContent}>
         <h3 className={styles.cardTitle}>{project.name}</h3>
-        <p className={styles.cardDescription}>{project.description}</p>
+        <div
+          className={styles.cardDescription}
+          dangerouslySetInnerHTML={{
+            __html: sanitizeHtml(project.description),
+          }}
+        />
 
         <div className={styles.techStack}>
-          {project.technologies_list.map((tech: string, index: number) => (
+          {project.technologies.map((tech: string, index: number) => (
             <span key={index} className={styles.techBadge}>
               {tech}
             </span>
@@ -109,7 +139,7 @@ const Programming: FC = () => {
             <ProjectSkeleton count={3} />
           ) : projects.length > 0 ? (
             projects.map(project => (
-              <ProjectCard key={project.pk} project={project} />
+              <ProjectCard key={project.id} project={project} />
             ))
           ) : (
             <div className={styles.noResults}>

@@ -299,7 +299,24 @@ const server = http.createServer((req, res) => {
     return json(res, 200, [
       { name: t(L, 'Mgławice', 'Nebulae'), slug: 'nebulae', count: 2 },
     ]);
-  if (p === '/v1/projects/') return json(res, 200, []);
+  if (p === '/v1/projects/')
+    return flagsOff.includes('programming')
+      ? notFound(res)
+      : json(res, 200, {
+          projects: [
+            {
+              id: '1',
+              name: t(L, 'Podróż kosmiczna', 'Cosmic Journey'),
+              description: t(L, '<p>Opis PL</p>', '<p>Description EN</p>'),
+              technologies: ['React', 'TypeScript'],
+              github_url: 'https://github.com/test/cosmic',
+              live_url: 'https://example.com/cosmic',
+              created_at: '2026-11-19T12:00:00Z',
+              price_tag: { type: 'free' },
+              ...withMedia('/media/shop/p1.webp'),
+            },
+          ],
+        });
   if (p === '/v1/shop/products/') return json(res, 200, shop(L));
   if (p === '/v1/travel-highlights/') return json(res, 200, [travel(L)]);
   if (p === '/v1/astroimages/latest/')

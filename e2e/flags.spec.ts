@@ -28,3 +28,12 @@ test('shop renders again after flags are reset', async ({ request }) => {
   await setOff(request, []);
   expect((await request.get('/shop')).status()).toBe(200);
 });
+
+test('programming page renders the project from the API', async ({ page }) => {
+  await page.goto('/programming');
+  await expect(page.getByText('Cosmic Journey')).toBeVisible();
+  await expect(page.getByRole('link', { name: /Source/ })).toHaveAttribute(
+    'href',
+    'https://github.com/test/cosmic'
+  );
+});
