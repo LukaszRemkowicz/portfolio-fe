@@ -5,6 +5,7 @@ import {
   fetchLatestAstroImages,
   fetchTravelHighlights,
   fetchShopProducts,
+  fetchProjects,
   fetchContact,
   fetchAstroImageDetail,
   fetchSettings,
@@ -307,6 +308,43 @@ describe('API Services', () => {
       expect(result[0].images[0].fallback_image?.url).toBe(
         '/media/travel-card.webp'
       );
+    });
+  });
+
+  describe('fetchProjects', () => {
+    it('fetches projects via the BFF and normalizes media', async () => {
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          projects: [
+            {
+              id: '1',
+              name: 'P',
+              description: '',
+              technologies: ['React'],
+              created_at: '2026-11-19T12:00:00Z',
+              fallback_image: {
+                url: '/media/p.webp',
+                width: 800,
+                height: 500,
+                mime_type: 'image/webp',
+              },
+              variants: { thumbnail: [] },
+            },
+            { id: '2', name: 'No image', fallback_image: null },
+          ],
+        }),
+      } as Response);
+
+      const result = await fetchProjects();
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `http://localhost${BFF_ROUTES.projects}?lang=en`,
+        { headers: { Accept: 'application/json' } }
+      );
+      expect(result).toHaveLength(2);
+      expect(result[0].fallback_image?.url).toContain('/media/p.webp');
+      expect(result[1].fallback_image).toBeNull();
     });
   });
 

@@ -34,6 +34,7 @@ export const BFF_ROUTES = {
   background: '/app/background/',
   astroImages: '/app/astroimages/',
   shop: '/app/shop/',
+  projects: '/app/projects/',
   settings: '/app/settings/',
   travelHighlights: '/app/travel-highlights/',
   tags: '/app/tags/',

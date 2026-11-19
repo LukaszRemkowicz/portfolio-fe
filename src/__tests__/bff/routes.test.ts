@@ -5,6 +5,15 @@ import {
   getTravelBackendRoute,
 } from '../../server/bff/routes';
 
+describe('BFF projects route', () => {
+  it('maps /app/projects/ to the backend projects endpoint', () => {
+    expect(getFrontendTransportRoute('/app/projects/', 'GET')).toMatchObject({
+      backendPath: '/v1/projects/',
+      kind: 'projects',
+    });
+  });
+});
+
 describe('BFF route sanitization', () => {
   it('rejects invalid image-file slugs before building backend paths', () => {
     expect(

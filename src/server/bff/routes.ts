@@ -21,6 +21,7 @@ export const BFF_ROUTES = {
   background: '/app/background/',
   astroImages: '/app/astroimages/',
   shop: '/app/shop/',
+  projects: '/app/projects/',
   settings: '/app/settings/',
   travelHighlights: '/app/travel-highlights/',
   tags: '/app/tags/',
@@ -174,6 +175,11 @@ function getReadBackendRoute(
       pathname: BFF_ROUTES.shop,
       backendPath: '/v1/shop/products/',
       kind: 'shop',
+    },
+    {
+      pathname: BFF_ROUTES.projects,
+      backendPath: '/v1/projects/',
+      kind: 'projects',
     },
     {
       pathname: BFF_ROUTES.travelHighlights,
