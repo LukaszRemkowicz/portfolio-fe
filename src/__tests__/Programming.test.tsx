@@ -42,30 +42,82 @@ describe('Programming Component', () => {
     expect(screen.getAllByTestId('project-skeleton')).toHaveLength(3);
   });
 
-  it('renders projects list', () => {
-    const mockProjects: Project[] = [
-      {
-        pk: 1,
-        name: 'Test Project',
-        description: 'Test Description',
-        technologies: 'React, Node',
-        technologies_list: ['React', 'Node'],
-        github_url: 'http://github.com',
-        live_url: 'http://live.com',
-        images: [{ pk: 1, url: 'test.jpg', name: 'Test', is_cover: true }],
-        created_at: '2023-01-01',
-        updated_at: '2023-01-01',
-      },
-    ];
+  const baseProject: Project = {
+    id: '1',
+    name: 'Test Project',
+    description: '<p>Test Description</p><script>alert(1)</script>',
+    technologies: ['React', 'Node'],
+    github_url: 'http://github.com',
+    live_url: 'http://live.com',
+    created_at: '2023-01-01T00:00:00Z',
+    fallback_image: {
+      url: '/test.webp',
+      width: 800,
+      height: 500,
+      mime_type: 'image/webp',
+    },
+    variants: {},
+  };
 
+  const mockData = (projects: Project[]) =>
     (useProjects as jest.Mock).mockReturnValue({
-      data: mockProjects,
+      data: projects,
       isLoading: false,
       error: null,
     });
 
-    renderProgramming();
+  it('renders project card with sanitized description, tech and links', () => {
+    mockData([baseProject]);
+    const { container } = renderProgramming();
     expect(screen.getByText('Test Project')).toBeInTheDocument();
     expect(screen.getByText('Test Description')).toBeInTheDocument();
+    expect(container.querySelector('script')).toBeNull();
+    expect(screen.getByText('React')).toBeInTheDocument();
+    expect(screen.getByAltText('Test Project')).toHaveAttribute(
+      'src',
+      '/test.webp'
+    );
+    const source = screen.getByRole('link', { name: /Source/ });
+    expect(source).toHaveAttribute('href', 'http://github.com');
+    expect(source).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(source).toHaveAttribute('target', '_blank');
+    expect(screen.getByRole('link', { name: /Live Demo/ })).toHaveAttribute(
+      'href',
+      'http://live.com'
+    );
+  });
+
+  it('renders price badge for free, paid and none', () => {
+    mockData([{ ...baseProject, price_tag: { type: 'free' } }]);
+    const { unmount } = renderProgramming();
+    expect(screen.getByText('Free')).toBeInTheDocument();
+    unmount();
+
+    mockData([
+      {
+        ...baseProject,
+        price_tag: { type: 'paid', amount: '49.00', currency: 'PLN' },
+      },
+    ]);
+    const second = renderProgramming();
+    expect(screen.getByText(/49/)).toHaveTextContent(/PLN|zł/);
+    second.unmount();
+
+    mockData([{ ...baseProject, price_tag: null }]);
+    renderProgramming();
+    expect(screen.queryByText('Free')).toBeNull();
+    expect(screen.queryByText(/49/)).toBeNull();
+  });
+
+  it('hides links when urls are empty', () => {
+    mockData([{ ...baseProject, github_url: '', live_url: undefined }]);
+    renderProgramming();
+    expect(screen.queryByRole('link')).toBeNull();
+  });
+
+  it('renders placeholder when there is no image', () => {
+    mockData([{ ...baseProject, fallback_image: null }]);
+    renderProgramming();
+    expect(screen.queryByAltText('Test Project')).toBeNull();
   });
 });

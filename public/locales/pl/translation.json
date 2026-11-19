@@ -49,6 +49,7 @@
     "title": "Archiwum Projektów",
     "subtitle": "Kolekcja projektów inżynierii oprogramowania, od mikroserwisów po kreatywne eksperymenty frontendowe.",
     "source": "Kod źródłowy",
+    "priceFree": "Za darmo",
     "liveDemo": "Demo Live",
     "empty": "Archiwa wydają się być puste. Wróć później po nowe transmisje."
   },

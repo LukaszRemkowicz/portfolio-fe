@@ -147,6 +147,7 @@ jest.mock('react-i18next', () => ({
           'A collection of software engineering projects, from microservices to creative frontend experiments.',
         'programming.source': 'Source',
         'programming.liveDemo': 'Live Demo',
+        'programming.priceFree': 'Free',
         'programming.empty':
           'The archives appear to be empty. Check back later for new transmissions.',
         'shop.metaTitle': 'Shop',

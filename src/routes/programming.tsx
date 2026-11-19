@@ -2,11 +2,13 @@ import { HydrationBoundary, dehydrate } from '@tanstack/react-query';
 import { data } from 'react-router';
 import type { Route } from './+types/programming';
 import ProgrammingRoute from '../components/ProgrammingRoute';
-import { fetchSettings } from '../api/services';
+import { APP_ROUTES } from '../api/constants';
+import { fetchProjects, fetchSettings } from '../api/services';
 import {
   createLoaderQueryClient,
   createLoaderRequestContext,
   fetchQueryOrNotFound,
+  prefetchQuerySafely,
 } from '../utils/loaderData';
 import { NOT_FOUND_SEO, routeMeta } from '../seo/buildMeta';
 import type { EnabledFeatures } from '../types';
@@ -35,11 +37,17 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     );
   }
 
+  await prefetchQuerySafely(queryClient, {
+    queryKey: ['projects', language],
+    queryFn: () => fetchProjects(client),
+  });
+
   return {
     dehydratedState: dehydrate(queryClient),
     seo: {
       title: t('programming.title'),
       description: t('programming.subtitle'),
+      url: APP_ROUTES.PROGRAMMING,
     },
   };
 }

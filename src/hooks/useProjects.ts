@@ -9,7 +9,7 @@ export const useProjects = () => {
 
   return useQuery<Project[], Error>({
     queryKey: ['projects', language],
-    queryFn: fetchProjects,
+    queryFn: () => fetchProjects(),
     staleTime: 5 * 60 * 1000,
   });
 };

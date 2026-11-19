@@ -28,6 +28,7 @@ import {
   FilterParams,
   EnabledFeatures,
   Project,
+  ProjectsResponse,
   MainPageLocation,
   Tag,
   ShopCatalog,
@@ -224,21 +225,19 @@ export const fetchSettings = async (
   }
 };
 
-/** Placeholder project service kept for compatibility until project data is reintroduced. */
-export const fetchProjects = async (): Promise<Project[]> => {
-  // const response: AxiosResponse<Project[]> = await api.get(API_ROUTES.projects);
-  // const data = handleResponse<Project[]>(response);
-  // if (Array.isArray(data)) {
-  //   return data.map(project => ({
-  //     ...project,
-  //     images: project.images.map(image => ({
-  //       ...image,
-  //       url: getMediaUrl(image.url) || '',
-  //     })),
-  //   }));
-  // }
-  // return data;
-  return [];
+/** Fetch the public programming projects, normalizing image media URLs. */
+export const fetchProjects = async (
+  clientOrTransport: ClientOrTransport = api
+): Promise<Project[]> => {
+  const transport = resolveDataTransport(clientOrTransport);
+  const data = await transport.get<ProjectsResponse>({
+    browser: BFF_ROUTES.projects,
+    server: API_ROUTES.projects,
+  });
+
+  return Array.isArray(data?.projects)
+    ? data.projects.map(p => normalizeImageVariantPayload(p) ?? p)
+    : [];
 };
 
 /** Fetch the public shop catalog, including storefront title/description and products. */

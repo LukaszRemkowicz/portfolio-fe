@@ -50,6 +50,7 @@
     "subtitle": "A collection of software engineering projects, from microservices to creative frontend experiments.",
     "source": "Source",
     "liveDemo": "Live Demo",
+    "priceFree": "Free",
     "empty": "The archives appear to be empty. Check back later for new transmissions."
   },
   "footer": {
