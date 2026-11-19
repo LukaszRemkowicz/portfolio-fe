@@ -41,7 +41,7 @@ const ImageModalContent: FC<ImageModalProps> = ({ image, onClose }) => {
   const { data: activeImageDetail, isLoading: isActiveImageLoading } =
     useAstroImageDetail(image?.slug || null);
   const { data: imageUrls = {} } = useImageUrls(
-    image ? image.pk.toString() : null,
+    image?.pk != null ? String(image.pk) : null,
     !!image
   );
   const thumbnailImageSrc =
@@ -463,7 +463,7 @@ const ImageModalContent: FC<ImageModalProps> = ({ image, onClose }) => {
 const ImageModal: FC<ImageModalProps> = ({ image, onClose }) => {
   return (
     <ImageModalContent
-      key={image?.pk ? image.pk.toString() : 'image-modal-empty'}
+      key={image?.pk != null ? String(image.pk) : 'image-modal-empty'}
       image={image}
       onClose={onClose}
     />

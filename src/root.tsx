@@ -5,6 +5,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  isRouteErrorResponse,
   useRevalidator,
   useRouteLoaderData,
 } from 'react-router';
@@ -276,9 +277,13 @@ export default function Root({ loaderData }: Route.ComponentProps) {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  console.error('Uncaught error:', error);
+  // Bot 4xx (e.g. POST to a page without an action) already answer 4xx; not an app error.
+  const isAppError = !isRouteErrorResponse(error) || error.status >= 500;
+  if (isAppError) console.error('Uncaught error:', error);
   // Render also runs during SSR; report only from the browser.
-  useEffect(() => captureError(error), [error]);
+  useEffect(() => {
+    if (isAppError) captureError(error);
+  }, [error, isAppError]);
   return (
     <div className={`${styles.appContainer} ${styles.astroBg}`}>
       <ErrorFallback />

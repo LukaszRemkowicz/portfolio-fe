@@ -1,8 +1,8 @@
 import { isbot } from 'isbot';
 import { renderToReadableStream } from 'react-dom/server';
 import { I18nextProvider } from 'react-i18next';
-import { ServerRouter } from 'react-router';
-import type { EntryContext } from 'react-router';
+import { ServerRouter, isRouteErrorResponse } from 'react-router';
+import type { EntryContext, HandleErrorFunction } from 'react-router';
 import { createServerI18n } from './i18n.server';
 import { NonceContext } from './server/nonce';
 import { applyCsp, generateNonce } from './server/csp';
@@ -10,6 +10,18 @@ import { getRequestLanguage } from './utils/requestMeta';
 
 // Max time to wait for Suspense boundaries (bots/SPA wait for allReady).
 export const streamTimeout = 5_000;
+
+// Same as React Router's default handler, but bot 4xx (e.g. a POST to a page without an
+// action -> 405) are already answered with 4xx and are not app errors.
+export const handleError: HandleErrorFunction = (error, { request }) => {
+  if (request.signal.aborted) return;
+  if (isRouteErrorResponse(error)) {
+    if (error.status < 500) return;
+    console.error((error as { error?: unknown }).error ?? error);
+    return;
+  }
+  console.error(error);
+};
 
 export default async function handleRequest(
   request: Request,

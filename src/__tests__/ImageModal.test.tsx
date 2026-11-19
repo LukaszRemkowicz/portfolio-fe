@@ -325,4 +325,9 @@ describe('ImageModal Lightbox', () => {
       ).not.toBeInTheDocument();
     });
   });
+
+  it('does not throw for an image payload without a pk', () => {
+    const noPk = { ...mockImage, pk: undefined } as unknown as AstroImage;
+    expect(() => renderModal(noPk)).not.toThrow();
+  });
 });
