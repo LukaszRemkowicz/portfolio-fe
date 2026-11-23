@@ -1,10 +1,9 @@
-# Local development only. Runs the dev server inside the backend repo's dev
-# network under the hostname `fe`, which is what its local nginx proxies to, so
-# https://portfolio.local and https://admin.portfolio.local work unchanged.
-#
-#   1. backend repo:  docker compose up -d be        (creates the network)
-#   2. this repo:     docker compose up -d fe
-#   3. backend repo:  docker compose up -d nginx
+# Local development only. Runs the dev server in Docker; it reaches the local
+# Edge Function API (:8001) and Django media (:8000) on the host (see
+# docker/dev.vars). Start the API with the backend repo's
+# infra/scripts/run_local_api.sh, then:  docker compose up -d fe
+# The site is on http://localhost:8080.
+
 name: portfolio-fe-dev
 
 services:
@@ -29,15 +28,11 @@ services:
       - ./docker/dev.vars:/app/.dev.vars:ro
       # Linux binaries (workerd, esbuild) must not mix with the host's node_modules.
       - node_modules:/app/node_modules
-    networks:
-      backend:
-        aliases: [fe]
+    ports:
+      - '8080:8080'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     restart: unless-stopped
 
 volumes:
   node_modules:
-
-networks:
-  backend:
-    name: portfolio-dev_portfolio_network
-    external: true

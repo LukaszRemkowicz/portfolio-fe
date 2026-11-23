@@ -6,8 +6,6 @@ const req = (headers: Record<string, string> = {}) =>
   new Request('https://portfolio.local/', { headers });
 
 afterEach(() => {
-  delete process.env.CF_ACCESS_CLIENT_ID;
-  delete process.env.CF_ACCESS_CLIENT_SECRET;
   delete process.env.API_ORIGIN_SECRET;
 });
 
@@ -25,17 +23,6 @@ describe('getOriginHeaders', () => {
     expect(getOriginHeaders(req())).toEqual({});
   });
 
-  it('adds the Access service token only when both parts are set', () => {
-    process.env.CF_ACCESS_CLIENT_ID = 'id.access';
-    expect(getOriginHeaders(req())).toEqual({});
-
-    process.env.CF_ACCESS_CLIENT_SECRET = 's3cret';
-    expect(getOriginHeaders(req())).toEqual({
-      'CF-Access-Client-Id': 'id.access',
-      'CF-Access-Client-Secret': 's3cret',
-    });
-  });
-
   it('adds the origin secret for the hidden API only when set', () => {
     expect(getOriginHeaders(req())).toEqual({});
     process.env.API_ORIGIN_SECRET = 'origin-s3cret';
@@ -47,8 +34,7 @@ describe('getOriginHeaders', () => {
 
 describe('createApiClient on the server (SSR loaders)', () => {
   it('sends origin headers with every backend request', async () => {
-    process.env.CF_ACCESS_CLIENT_ID = 'id.access';
-    process.env.CF_ACCESS_CLIENT_SECRET = 's3cret';
+    process.env.API_ORIGIN_SECRET = 'origin-s3cret';
     const fetchMock = jest.fn().mockResolvedValue({
       status: 200,
       ok: true,
@@ -68,8 +54,7 @@ describe('createApiClient on the server (SSR loaders)', () => {
     expect(fetchMock.mock.calls[0][1].headers).toMatchObject({
       'X-Request-ID': 'req-1',
       'X-Real-IP': '1.2.3.4',
-      'CF-Access-Client-Id': 'id.access',
-      'CF-Access-Client-Secret': 's3cret',
+      'X-Origin-Secret': 'origin-s3cret',
     });
   });
 });

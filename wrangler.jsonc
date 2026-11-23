@@ -3,9 +3,8 @@
   "name": "portfolio-fe",
   "main": "./workers/app.ts",
   "compatibility_date": "2025-09-01",
-  // global_fetch_strictly_public: fetches to our own zone (the backend tunnel at
-  // internal-api.<domain>) go through Cloudflare like Internet traffic. Without
-  // it, same-zone subrequests skip the tunnel/Access path and fail with 530.
+  // global_fetch_strictly_public: fetches to our own zone go through Cloudflare
+  // like Internet traffic instead of short-circuiting inside the zone.
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "observability": { "enabled": true },
   // Non-secret public runtime config. Local-dev defaults; override per
@@ -18,23 +17,22 @@
     "ENABLE_GA": "false",
     "SENTRY_DSN_FE": "",
     "PROJECT_OWNER": "Portfolio Owner",
-    "SSR_API_URL": "http://127.0.0.1:8765"
+    "SSR_API_URL": "http://127.0.0.1:8765",
   },
   // Deploy environments. `vars` are NOT inherited from the top level, so local
   // defaults (e.g. SSR_API_URL=127.0.0.1, SITE_DOMAIN=portfolio.local) never
   // leak into staging/production. The remaining vars (SITE_DOMAIN, API_URL,
   // SSR_API_URL, GA_TRACKING_ID, ENABLE_GA, SENTRY_DSN_FE, PROJECT_OWNER) are
-  // supplied at deploy time from Doppler. Secrets CF_ACCESS_CLIENT_ID and
-  // CF_ACCESS_CLIENT_SECRET (Access token for the backend tunnel) are set with
-  // `wrangler secret put`. No routes/domains are declared here.
+  // supplied at deploy time from Doppler. Secret API_ORIGIN_SECRET (shared
+  // secret for the Supabase Edge Function API) is set with `wrangler secret put`. No routes/domains are declared here.
   "env": {
     "staging": {
       "workers_dev": false,
-      "vars": { "ENVIRONMENT": "staging" }
+      "vars": { "ENVIRONMENT": "staging" },
     },
     "production": {
       "workers_dev": false,
-      "vars": { "ENVIRONMENT": "production" }
+      "vars": { "ENVIRONMENT": "production" },
     },
     // Test Worker (portfolio-fe-supabase on workers.dev) against the hidden
     // Supabase API. SITE_DOMAIN/PROJECT_OWNER come from Doppler at deploy;
@@ -45,8 +43,8 @@
         "ENVIRONMENT": "staging",
         "ENABLE_GA": "false",
         "GA_TRACKING_ID": "",
-        "SENTRY_DSN_FE": ""
-      }
-    }
-  }
+        "SENTRY_DSN_FE": "",
+      },
+    },
+  },
 }
