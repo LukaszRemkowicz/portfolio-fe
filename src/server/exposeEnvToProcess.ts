@@ -1,6 +1,6 @@
 /**
  * Copy string bindings (vars and secrets) into process.env. In production the
- * Worker's secrets (SITE_DOMAIN, SSR_API_URL, CF_ACCESS_*) did not show up in
+ * Worker's secrets (SITE_DOMAIN, SSR_API_URL, API_ORIGIN_SECRET) did not show up in
  * process.env, which the app reads, so it fell back to localhost defaults.
  * Existing values win, so explicit local/test overrides are kept.
  */

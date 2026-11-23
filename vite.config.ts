@@ -22,6 +22,28 @@ function pwaClientOnly(): Plugin[] {
   }));
 }
 
+/**
+ * react-zoom-pan-pinch injects its CSS as a <style> at import time with no
+ * nonce option, which the enforced CSP (style-src nonce) blocks. Give that
+ * element the page's nonce, read from the nonced bootstrap <script>.
+ */
+function zoomPanPinchStyleNonce(): Plugin {
+  const needle = "style.type = 'text/css';";
+  return {
+    name: 'zoom-pan-pinch-style-nonce',
+    enforce: 'pre',
+    transform(code, id) {
+      if (!id.includes('react-zoom-pan-pinch') || !code.includes(needle))
+        return null;
+      return code.replace(
+        needle,
+        needle +
+          " var n = document.querySelector('script[nonce]'); if (n && n.nonce) { style.setAttribute('nonce', n.nonce); }"
+      );
+    },
+  };
+}
+
 export default defineConfig((): UserConfig => {
   const appEnvironment =
     process.env.ENVIRONMENT || process.env.VITE_ENVIRONMENT || 'development';
@@ -29,8 +51,8 @@ export default defineConfig((): UserConfig => {
   const enablePwa = !disablePwaEnvironments.includes(appEnvironment);
 
   return {
-    // Docker dev (docker-compose.yml): the backend nginx blocks dot paths like
-    // /node_modules/.vite/, so the dep cache needs a dot-free directory there.
+    // Docker dev (docker-compose.yml): dot-free dep cache directory, kept
+    // inside the node_modules volume.
     cacheDir: process.env.VITE_CACHE_DIR || undefined,
     esbuild: {
       target: 'es2022',
@@ -44,6 +66,7 @@ export default defineConfig((): UserConfig => {
     plugins: [
       cloudflare({ viteEnvironment: { name: 'ssr' } }),
       reactRouter(),
+      zoomPanPinchStyleNonce(),
       enablePwa && pwaClientOnly(),
     ].filter(Boolean),
     css: {

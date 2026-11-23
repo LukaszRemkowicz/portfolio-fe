@@ -1,4 +1,4 @@
-// Same values nginx sent before the Worker replaced it.
+// Security headers added to every Worker response.
 export const SECURITY_HEADERS: Readonly<Record<string, string>> = {
   'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
   'X-Content-Type-Options': 'nosniff',

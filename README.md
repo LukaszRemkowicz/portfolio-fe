@@ -1,6 +1,6 @@
 # Portfolio Frontend
 
-React 18 + TypeScript app in React Router 7 framework mode (SSR) running on Cloudflare Workers. It renders the public site, serves a small BFF under `/app/*` for browser JSON flows, and proxies to the Django backend.
+React 18 + TypeScript app in React Router 7 framework mode (SSR) running on Cloudflare Workers. It renders the public site, serves a small BFF under `/app/*` for browser JSON flows, and proxies to the API (Supabase Edge Function).
 
 ## Stack
 
@@ -22,26 +22,23 @@ React Router 7 (framework mode), Vite, `@cloudflare/vite-plugin` + Wrangler, Tan
 
 Copy `.dev.vars.example` to `.dev.vars` (gitignored) for local values. Main variables: `SITE_DOMAIN`, `API_URL` (public), `SSR_API_URL` (Worker to backend), `PROJECT_OWNER`, `GA_TRACKING_ID`, `ENABLE_GA`, `SENTRY_DSN_FE`, `ENVIRONMENT`. Deploy-time values come from Doppler; no routes are declared in `wrangler.jsonc`.
 
-### Backend access (Cloudflare Tunnel)
+### Backend access (Supabase Edge Function)
 
-The Worker reaches Django like the old in-network frontend did, through a Cloudflare Tunnel: the `cloudflared` service in the portfolio repo compose files forwards `https://<tunnel host>` to `http://be:8000`. The tunnel host is protected by Cloudflare Access; the Worker sends its service token on every backend call (BFF and SSR loaders) from the secrets `CF_ACCESS_CLIENT_ID` / `CF_ACCESS_CLIENT_SECRET`, together with the visitor IP (`X-Real-IP`) so Django throttles per visitor. Set `SSR_API_URL` to the tunnel host.
+The Worker calls the Supabase Edge Function API (BFF and SSR loaders). Set `SSR_API_URL` to the function URL and the Worker secret `API_ORIGIN_SECRET`, which is sent as `X-Origin-Secret`, together with the visitor IP (`X-Real-IP`, `X-Visitor-IP`) so the API throttles per visitor. There is no tunnel or Cloudflare Access path anymore.
 
-`MEDIA_ORIGIN` (optional) is for test deploys without an origin route, e.g. `*.workers.dev`: the Worker then serves `/media/*` from that origin. Leave it unset in production, where Workers routes send `/media/*` to the VPS.
+`MEDIA_ORIGIN` (optional) makes the Worker serve `/media/*` from that origin; used locally (Django) and on test deploys without an origin route, e.g. `*.workers.dev`. Leave it unset in production.
 
-### Local stack (https://portfolio.local)
+### Local dev
 
-`docker-compose.yml` runs the dev server in the backend repo's dev network under the hostname `fe`, which is where its local nginx sends `portfolio.local`; nginx also serves `admin.portfolio.local`. Worker vars come from `docker/dev.vars` (SSR goes straight to `http://be:8000`).
+By default `.dev.vars.example` points `SSR_API_URL` at the e2e mock backend. To run against the real local API, start the Edge Function from the backend repo (`infra/scripts/run_local_api.sh`, port 8001) and Django for media (port 8000), then set in `.dev.vars`:
 
-```bash
-# backend repo (portfolio)
-doppler run -p portfolio -c dev -- docker compose up -d be
-# this repo
-docker compose up -d fe
-# backend repo again; nginx needs `fe` to resolve before it starts
-doppler run -p portfolio -c dev -- docker compose up -d nginx
+```
+SSR_API_URL=http://localhost:8001
+API_ORIGIN_SECRET=local-dev-secret
+MEDIA_ORIGIN=http://localhost:8000
 ```
 
-`node_modules` lives in a Docker volume (Linux binaries); `npm ci` reruns when `package-lock.json` changes.
+`docker compose up -d fe` runs the dev server in Docker on http://localhost:8080 with the same values via `docker/dev.vars` (`host.docker.internal` instead of `localhost`). `node_modules` lives in a Docker volume (Linux binaries); `npm ci` reruns when `package-lock.json` changes.
 
 ## Commands
 
@@ -72,7 +69,7 @@ The version lives only in `package.json`. `.github/workflows/ci-cd.yml` runs lin
 - `workers/app.ts` adds HSTS, `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy` to every Worker response (`src/server/securityHeaders.ts`; existing headers are kept). `public/_headers` has the same set for static assets.
 - HTML responses also get a per-request-nonce CSP (`src/server/csp.ts`, set in `src/entry.server.tsx`). Default is `Content-Security-Policy-Report-Only`; set `CSP_MODE=enforce` (Worker var) to send `Content-Security-Policy`. GA hosts are allowed only when `ENABLE_GA=true` and `GA_TRACKING_ID` is set.
 - With a valid `SENTRY_DSN_FE`, violations go to Sentry (`report-uri` + `report-to csp-endpoint` + `Reporting-Endpoints`) and the Sentry origin is added to `connect-src`.
-- To enforce: watch Sentry reports for a while, add legitimate hosts to `buildCsp`, then set `CSP_MODE=enforce`. Cloudflare's injected JS-detections script will show as report noise.
+- Production and the `supabase` test env set `CSP_MODE=enforce` in `wrangler.jsonc`; local and staging stay Report-Only. New hosts must be added to `buildCsp`; `e2e/csp.spec.ts` runs the preview in enforce mode and fails on any violation. `react-zoom-pan-pinch` injects a `<style>` without a nonce option, so `vite.config.ts` patches it to carry the page nonce.
 
 ## Public routes
 
