@@ -16,6 +16,12 @@ describe('buildCsp', () => {
     expect(policy).not.toContain('unsafe-eval');
   });
 
+  it('allows Facebook emoji images in img-src', () => {
+    const policy = buildCsp({ nonce: 'N', gaEnabled: false }).policy;
+    const img = policy.split('; ').find(d => d.startsWith('img-src'))!;
+    expect(img).toContain('https://static.xx.fbcdn.net');
+  });
+
   it('adds GA hosts only when GA is on', () => {
     expect(buildCsp({ nonce: 'N', gaEnabled: false }).policy).not.toContain(
       'google'
