@@ -22,6 +22,28 @@ function pwaClientOnly(): Plugin[] {
   }));
 }
 
+/**
+ * react-zoom-pan-pinch injects its CSS as a <style> at import time with no
+ * nonce option, which the enforced CSP (style-src nonce) blocks. Give that
+ * element the page's nonce, read from the nonced bootstrap <script>.
+ */
+function zoomPanPinchStyleNonce(): Plugin {
+  const needle = "style.type = 'text/css';";
+  return {
+    name: 'zoom-pan-pinch-style-nonce',
+    enforce: 'pre',
+    transform(code, id) {
+      if (!id.includes('react-zoom-pan-pinch') || !code.includes(needle))
+        return null;
+      return code.replace(
+        needle,
+        needle +
+          " var n = document.querySelector('script[nonce]'); if (n && n.nonce) { style.setAttribute('nonce', n.nonce); }"
+      );
+    },
+  };
+}
+
 export default defineConfig((): UserConfig => {
   const appEnvironment =
     process.env.ENVIRONMENT || process.env.VITE_ENVIRONMENT || 'development';
@@ -44,6 +66,7 @@ export default defineConfig((): UserConfig => {
     plugins: [
       cloudflare({ viteEnvironment: { name: 'ssr' } }),
       reactRouter(),
+      zoomPanPinchStyleNonce(),
       enablePwa && pwaClientOnly(),
     ].filter(Boolean),
     css: {

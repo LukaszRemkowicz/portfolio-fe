@@ -32,7 +32,7 @@
     },
     "production": {
       "workers_dev": false,
-      "vars": { "ENVIRONMENT": "production" },
+      "vars": { "ENVIRONMENT": "production", "CSP_MODE": "enforce" },
     },
     // Test Worker (portfolio-fe-supabase on workers.dev) against the hidden
     // Supabase API. SITE_DOMAIN/PROJECT_OWNER come from Doppler at deploy;

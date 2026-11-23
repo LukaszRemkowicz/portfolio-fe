@@ -69,7 +69,7 @@ The version lives only in `package.json`. `.github/workflows/ci-cd.yml` runs lin
 - `workers/app.ts` adds HSTS, `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy` to every Worker response (`src/server/securityHeaders.ts`; existing headers are kept). `public/_headers` has the same set for static assets.
 - HTML responses also get a per-request-nonce CSP (`src/server/csp.ts`, set in `src/entry.server.tsx`). Default is `Content-Security-Policy-Report-Only`; set `CSP_MODE=enforce` (Worker var) to send `Content-Security-Policy`. GA hosts are allowed only when `ENABLE_GA=true` and `GA_TRACKING_ID` is set.
 - With a valid `SENTRY_DSN_FE`, violations go to Sentry (`report-uri` + `report-to csp-endpoint` + `Reporting-Endpoints`) and the Sentry origin is added to `connect-src`.
-- To enforce: first fix the violations the app still has (inline scripts without a nonce on `/`, runtime-injected `<style>` from the `ImageModal` chunk), add legitimate hosts to `buildCsp`, then set `CSP_MODE=enforce`. Cloudflare's injected JS-detections script will show as report noise.
+- Production and the `supabase` test env set `CSP_MODE=enforce` in `wrangler.jsonc`; local and staging stay Report-Only. New hosts must be added to `buildCsp`; `e2e/csp.spec.ts` runs the preview in enforce mode and fails on any violation. `react-zoom-pan-pinch` injects a `<style>` without a nonce option, so `vite.config.ts` patches it to carry the page nonce.
 
 ## Public routes
 
