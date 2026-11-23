@@ -16,7 +16,7 @@ Merging a new `package.json` version to `main` tags `v<version>` and deploys the
 
 Runtime config lives in Cloudflare on each Worker, not in GitHub: set once as Worker secrets
 (survive deploys): `SITE_DOMAIN`, `API_URL`, `SSR_API_URL`, `GA_TRACKING_ID`, `ENABLE_GA`,
-`SENTRY_DSN_FE`, `PROJECT_OWNER`, `CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET`
+`SENTRY_DSN_FE`, `PROJECT_OWNER`, `API_ORIGIN_SECRET`
 (source values: Doppler `portfolio/prd`). `ENVIRONMENT` comes from `wrangler.jsonc`.
 
 ## Branch model

@@ -1,4 +1,4 @@
-# Workers static assets headers; mirrors infra/nginx/static_server.conf.
+# Workers static assets headers.
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 

@@ -32,19 +32,16 @@ afterEach(() => {
 });
 
 describe('handleBffRequest', () => {
-  it('sends the Cloudflare Access service token to the origin when configured', async () => {
-    process.env.CF_ACCESS_CLIENT_ID = 'id.access';
-    process.env.CF_ACCESS_CLIENT_SECRET = 's3cret';
+  it('sends the origin secret to the API when configured', async () => {
+    process.env.API_ORIGIN_SECRET = 'origin-s3cret';
     try {
       upstream.mockResolvedValue(jsonUpstream({}));
       await call('/app/settings/');
       expect(upstream.mock.calls[0][1].headers).toMatchObject({
-        'CF-Access-Client-Id': 'id.access',
-        'CF-Access-Client-Secret': 's3cret',
+        'X-Origin-Secret': 'origin-s3cret',
       });
     } finally {
-      delete process.env.CF_ACCESS_CLIENT_ID;
-      delete process.env.CF_ACCESS_CLIENT_SECRET;
+      delete process.env.API_ORIGIN_SECRET;
     }
   });
 
@@ -135,7 +132,7 @@ describe('handleBffRequest', () => {
       'X-Forwarded-Proto': 'https',
     });
     // A Host override would be honored for same-zone fetches and misroute
-    // the tunnel request; Django reads X-Forwarded-Host instead.
+    // the API request; the API reads X-Forwarded-Host instead.
     expect(upstream.mock.calls[0][1].headers).not.toHaveProperty('Host');
   });
 

@@ -78,7 +78,7 @@ export default defineConfig({
       // also enables the PWA at build time.
       command:
         `ENVIRONMENT=production npm run build && ` +
-        `CLOUDFLARE_INCLUDE_PROCESS_ENV=true ENVIRONMENT=production SSR_API_URL=http://127.0.0.1:${MOCK_PORT} ` +
+        `CLOUDFLARE_INCLUDE_PROCESS_ENV=true ENVIRONMENT=production CSP_MODE=enforce SSR_API_URL=http://127.0.0.1:${MOCK_PORT} ` +
         `exec npx vite preview --host 127.0.0.1 --port ${APP_PORT} --strictPort`,
       url: `${APP_URL}/health`,
       reuseExistingServer: !process.env.CI,

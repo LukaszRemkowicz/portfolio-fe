@@ -1,7 +1,7 @@
 /**
  * Test deployments only (e.g. *.workers.dev): serve `/media/*` from
- * MEDIA_ORIGIN. In production Cloudflare routes send `/media/*` straight to
- * the VPS, so MEDIA_ORIGIN stays unset there.
+ * MEDIA_ORIGIN. Unset in production, where `/media/*` is served from the
+ * media host. Locally it points at Django's /media.
  */
 export function getMediaPassthroughUrl(
   requestUrl: string,

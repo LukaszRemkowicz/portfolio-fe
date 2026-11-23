@@ -4,12 +4,12 @@ describe('exposeEnvToProcess', () => {
   it('copies string bindings (vars and secrets) that process.env lacks', () => {
     const target: Record<string, string | undefined> = {};
     exposeEnvToProcess(
-      { SSR_API_URL: 'https://backend.test', CF_ACCESS_CLIENT_SECRET: 's' },
+      { SSR_API_URL: 'https://backend.test', API_ORIGIN_SECRET: 's' },
       target
     );
     expect(target).toEqual({
       SSR_API_URL: 'https://backend.test',
-      CF_ACCESS_CLIENT_SECRET: 's',
+      API_ORIGIN_SECRET: 's',
     });
   });
 
