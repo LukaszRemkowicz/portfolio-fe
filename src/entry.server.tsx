@@ -44,6 +44,8 @@ export default async function handleRequest(
       </NonceContext.Provider>
     </I18nextProvider>,
     {
+      // React's streaming runtime ($RC/$RS) is inline; without the nonce CSP blocks it.
+      nonce,
       signal: controller.signal,
       onError(error) {
         responseStatusCode = 500;
