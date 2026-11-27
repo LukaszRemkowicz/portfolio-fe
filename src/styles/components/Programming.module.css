@@ -175,6 +175,19 @@
   border: 1px solid rgba(56, 189, 248, 0.35);
 }
 
+.specialBadge {
+  right: auto;
+  left: 0.75rem;
+  /* Keep the label's own casing, e.g. "macOS". */
+  text-transform: none;
+  letter-spacing: 0.02em;
+  color: #fcd34d;
+  background:
+    linear-gradient(rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.15)),
+    rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(252, 211, 77, 0.4);
+}
+
 .cardActions {
   display: flex;
   gap: 1.5rem;

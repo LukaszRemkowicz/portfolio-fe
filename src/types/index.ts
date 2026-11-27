@@ -148,6 +148,7 @@ export interface Project {
   live_url?: string;
   created_at: string;
   price_tag?: PriceTag | null;
+  badge?: string;
   fallback_image?: ImageVariantCandidate | null;
   variants?: ImageVariantsByRole;
 }
