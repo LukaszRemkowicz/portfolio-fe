@@ -47,6 +47,11 @@ const ProjectCard: FC<{ project: Project }> = ({ project }) => {
             <Code2 size={48} className={styles.placeholderIcon} />
           </div>
         )}
+        {project.badge && (
+          <span className={`${styles.priceBadge} ${styles.specialBadge}`}>
+            {project.badge}
+          </span>
+        )}
         {priceLabel && (
           <span
             className={`${styles.priceBadge} ${
