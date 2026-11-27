@@ -109,6 +109,17 @@ describe('Programming Component', () => {
     expect(screen.queryByText(/49/)).toBeNull();
   });
 
+  it('renders the special badge only when set', () => {
+    mockData([{ ...baseProject, badge: 'First on macOS' }]);
+    const { unmount } = renderProgramming();
+    expect(screen.getByText('First on macOS')).toBeInTheDocument();
+    unmount();
+
+    mockData([{ ...baseProject, badge: '' }]);
+    renderProgramming();
+    expect(screen.queryByText('First on macOS')).toBeNull();
+  });
+
   it('hides links when urls are empty', () => {
     mockData([{ ...baseProject, github_url: '', live_url: undefined }]);
     renderProgramming();
