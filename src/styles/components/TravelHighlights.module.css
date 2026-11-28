@@ -1,5 +1,5 @@
 .section {
-  max-width: 96rem;
+  max-width: 80rem;
   margin: 0 auto;
   padding: 6rem 1.5rem;
   position: relative;
@@ -29,9 +29,15 @@
 }
 
 .grid {
-  display: grid;
-  grid-template-columns: 1fr;
+  /* Flex, not grid, so a partial last row sits centered. */
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 2rem;
+}
+
+.grid > * {
+  flex: 0 1 100%;
 }
 
 .card {
@@ -50,14 +56,14 @@
 }
 
 @media (min-width: 768px) {
-  .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .grid > * {
+    flex-basis: calc((100% - 2rem) / 2);
   }
 }
 
 @media (min-width: 1024px) {
-  .grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .grid > * {
+    flex-basis: calc((100% - 4rem) / 3);
   }
 }
 
